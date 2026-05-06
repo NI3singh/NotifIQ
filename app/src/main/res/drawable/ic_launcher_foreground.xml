@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Bell body -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,28c-7.73,0 -14,6.27 -14,14v12c0,6.63 -4.39,12.34 -10.46,13.97L28,69.1c-0.41,0.32 -0.55,0.87 -0.34,1.34c0.21,0.47 0.67,0.76 1.17,0.76h49.34c0.5,0 0.96,-0.29 1.17,-0.76c0.21,-0.47 0.07,-1.02 -0.34,-1.34l-1.2,-1.13C72.46,66.34 68.07,60.63 68.07,54v-12c0,-7.73 -6.27,-14 -14,-14z"/>
+
+    <!-- Bell clapper -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,72c-2.21,0 -4,1.79 -4,4h8c0,-2.21 -1.79,-4 -4,-4z"/>
+
+    <!-- Lightning bolt accent (top right) -->
+    <path
+        android:fillColor="#6C9CFF"
+        android:pathData="M72,24l-6,12l-2,-1l6,-12l2,1z"/>
+
+    <!-- Small sparkle dot -->
+    <path
+        android:fillColor="#6C9CFF"
+        android:pathData="M76,32l2,0l0,4l-2,0z"/>
+
+</vector>

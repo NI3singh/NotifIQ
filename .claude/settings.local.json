@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(java:*)",
+      "Bash(gradle --version)",
+      "Bash(curl -sL https://services.gradle.org/distributions/gradle-8.7-bin.zip -o /tmp/gradle.zip)",
+      "Bash(unzip -q /tmp/gradle.zip -d /tmp/)",
+      "Bash(/tmp/gradle-8.7/bin/gradle wrapper --gradle-version 8.7)",
+      "Bash(./gradlew -v)",
+      "Bash(export ANDROID_HOME=\"/c/Users/ELaunch/AppData/Local/Android/Sdk\")",
+      "Bash(./gradlew assembleDebug --no-daemon)",
+      "Bash(echo '<?xml version=\"\"1.0\"\" encoding=\"\"utf-8\"\"?>\n<shape xmlns:android=\"\"http://schemas.android.com/apk/res/android\"\">\n    <solid android:color=\"\"#1A1A2E\"\"/>\n</shape>')",
+      "Bash(echo '<?xml version=\"\"1.0\"\" encoding=\"\"utf-8\"\"?>\n<adaptive-icon xmlns:android=\"\"http://schemas.android.com/apk/res/android\"\">\n    <background android:drawable=\"\"@drawable/ic_launcher_background\"\"/>\n    <foreground android:drawable=\"\"@drawable/ic_launcher_foreground\"\"/>\n</adaptive-icon>')",
+      "Bash(./gradlew clean assembleDebug)",
+      "Bash(./gradlew assembleDebug)"
+    ]
+  }
+}

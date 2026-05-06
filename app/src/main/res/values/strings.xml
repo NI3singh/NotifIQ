@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NotifIQ</string>
+
+    <!-- Navigation -->
+    <string name="tab_home">Home</string>
+    <string name="tab_inbox">Inbox</string>
+    <string name="tab_analytics">Insights</string>
+    <string name="tab_rules">Rules</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Notification Access -->
+    <string name="notification_access_required">Notification access required</string>
+    <string name="notification_access_disabled">NotifIQ can\'t capture notifications</string>
+    <string name="fix">Fix</string>
+
+    <!-- Dialogs -->
+    <string name="suppression_enable_title">Enable Smart Suppression?</string>
+    <string name="delete_all_title">Delete All Data?</string>
+    <string name="delete_all_message">This will permanently erase all notifications, rules, preferences, and analytics. This action cannot be undone.</string>
+
+    <!-- Empty States -->
+    <string name="no_notifications_yet">No notifications yet</string>
+    <string name="notifications_will_appear">Notifications will appear here as they arrive</string>
+
+    <!-- Classification Labels -->
+    <string name="important">Important</string>
+    <string name="useful">Useful</string>
+    <string name="normal">Normal</string>
+    <string name="low_value">Low Value</string>
+    <string name="spam">Spam</string>
+    <string name="unknown">Unknown</string>
+
+    <!-- Settings -->
+    <string name="notification_listener_permission">Notification Access</string>
+    <string name="notification_listener_description">NotifIQ needs notification access to analyze and classify notifications.</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="suppression_mode">Suppression Mode</string>
+    <string name="learn_mode">Learning Mode</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="clear_data">Clear All Data</string>
+    <string name="about">About</string>
+    <string name="version">Version</string>
+
+    <!-- Search -->
+    <string name="search_notifications">Search notifications...</string>
+    <string name="no_notifications">No notifications yet</string>
+
+    <!-- Detail Screen -->
+    <string name="classification_reason">Classification Reason</string>
+    <string name="mark_important">Mark as Important</string>
+    <string name="mark_spam">Mark as Spam</string>
+    <string name="archive">Archive</string>
+    <string name="undo">Undo</string>
+
+    <!-- Rules -->
+    <string name="create_rule">Create Rule</string>
+    <string name="edit_rule">Edit Rule</string>
+    <string name="delete_rule">Delete Rule</string>
+    <string name="rule_priority">Priority</string>
+    <string name="rule_condition">Condition</string>
+    <string name="rule_action">Action</string>
+
+    <!-- Analytics -->
+    <string name="daily_summary">Daily Summary</string>
+    <string name="weekly_summary">Weekly Summary</string>
+    <string name="noise_reduction">Noise Reduction</string>
+    <string name="total_notifications">Total Notifications</string>
+    <string name="important_count">Important</string>
+    <string name="useful_count">Useful</string>
+    <string name="suppressed_count">Suppressed</string>
+    <string name="spam_count">Spam</string>
+</resources>
