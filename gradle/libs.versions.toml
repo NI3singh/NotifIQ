@@ -1,7 +1,10 @@
 [versions]
-agp = "8.7.3"
-kotlin = "2.0.21"
-ksp = "2.0.21-1.0.28"
+agp = "9.2.1"
+kotlin = "2.2.10"
+# KSP format is always {kotlin_version}-{ksp_patch_release}.
+# "2.2.10" alone is not a published artifact — it must include the KSP patch suffix.
+# 2.2.10-2.0.2 is the published KSP release for Kotlin 2.2.10 (released Aug 14, 2025).
+ksp = "2.2.10-2.0.2"
 coreKtx = "1.15.0"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
@@ -9,7 +12,7 @@ composeBom = "2024.12.01"
 navigationCompose = "2.8.5"
 hilt = "2.53.1"
 hiltNavigationCompose = "1.2.0"
-room = "2.6.1"
+room = "2.7.0"
 datastore = "1.1.1"
 workManager = "2.10.0"
 paging = "3.3.5"

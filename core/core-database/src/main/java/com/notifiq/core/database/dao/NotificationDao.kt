@@ -75,6 +75,10 @@ interface NotificationDao {
     @Query("SELECT COUNT(*) FROM notifications WHERE package_name = :packageName AND created_at >= :since")
     suspend fun getCountByPackageSince(packageName: String, since: Long): Int
 
+    // ADDED — InboxViewModel calls this to populate filter chip counts
+    @Query("SELECT COUNT(*) FROM notifications WHERE classification_label = :label AND is_archived = 0")
+    suspend fun getCountByLabel(label: String): Int
+
     @Query("SELECT DISTINCT package_name, app_name FROM notifications")
     fun getAllApps(): Flow<List<AppInfo>>
 

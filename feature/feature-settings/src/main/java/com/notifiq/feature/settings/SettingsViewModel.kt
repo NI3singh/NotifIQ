@@ -2,7 +2,7 @@ package com.notifiq.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.notifiq.core.common.DateTimeUtils
+import java.util.Calendar
 import com.notifiq.core.database.dao.AnalyticsDao
 import com.notifiq.core.database.dao.AppPreferenceDao
 import com.notifiq.core.database.dao.FeedbackDao
@@ -10,9 +10,10 @@ import com.notifiq.core.database.dao.NotificationDao
 import com.notifiq.core.database.dao.RuleDao
 import com.notifiq.core.database.dao.SenderDao
 import com.notifiq.core.database.dao.SummaryDao
+import com.notifiq.core.database.mapper.toDomainModel
 import com.notifiq.core.datastore.UserPreferenceDataStore
 import com.notifiq.core.model.ClassificationLabel
-import com.notifiq.core.model.DailyAnalytics
+import com.notifiq.core.model.NotificationRecord
 import com.notifiq.core.model.SummaryReport
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,8 +22,11 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 data class SettingsUiState(
@@ -33,8 +37,7 @@ data class SettingsUiState(
     val todaySuppressed: Int = 0,
     val todaySpam: Int = 0,
     val usefulPercentage: Float = 0f,
-    val latestSummary: SummaryReport? = null,
-    val exportJson: String? = null
+    val latestSummary: SummaryReport? = null
 )
 
 sealed class SettingsEvent {
@@ -66,18 +69,37 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun loadData() {
-        viewModelScope.launch {
-            val todayStart = DateTimeUtils.todayStartMillis()
+        val todayStart = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
 
-            // Combine user preference and today's stats
-            kotlinx.coroutines.flow.combine(
-                userPreferenceDataStore.userPreference,
+        // FIX 7B: combine() with 6 named lambda parameters does not compile —
+        // the overload only exists for up to 5 flows.
+        // Fix: nest two valid combines (5-flow inner, 2-flow outer).
+        viewModelScope.launch {
+            val countFlows = combine(
                 notificationDao.getTodayCount(todayStart),
                 notificationDao.getTodayCountByLabel(ClassificationLabel.IMPORTANT.name, todayStart),
                 notificationDao.getTodayCountByLabel(ClassificationLabel.USEFUL.name, todayStart),
                 notificationDao.getTodayCountByLabel(ClassificationLabel.SPAM.name, todayStart),
                 notificationDao.getSuppressedTodayCount(todayStart)
-            ) { prefs, total, important, useful, spam, suppressed ->
+            ) { total, important, useful, spam, suppressed ->
+                intArrayOf(total, important, useful, spam, suppressed)
+            }
+
+            combine(
+                userPreferenceDataStore.userPreference,
+                countFlows
+            ) { prefs, counts ->
+                val total      = counts[0]
+                val important  = counts[1]
+                val useful     = counts[2]
+                val spam       = counts[3]
+                val suppressed = counts[4]
+
                 val usefulPct = if (total > 0) {
                     ((important + useful).toFloat() / total.toFloat()) * 100f
                 } else 0f
@@ -96,63 +118,44 @@ class SettingsViewModel @Inject constructor(
             }
         }
 
-        // Load latest summary
+        // FIX 4C: The old code accessed non-existent fields on SummaryEntity
+        // (date, totalNotifications, normalCount, lowValueCount) and constructed
+        // SummaryReport with a non-existent topApps parameter.
+        // Fix: use the existing toDomainModel() mapper from EntityMappers which maps
+        // the correct SummaryEntity fields to SummaryReport fields.
         viewModelScope.launch {
             val latest = summaryDao.getLatest("DAILY")
             if (latest != null) {
-                val summary = SummaryReport(
-                    id = latest.id,
-                    type = com.notifiq.core.model.SummaryType.valueOf(latest.type),
-                    date = latest.date,
-                    totalNotifications = latest.totalNotifications,
-                    importantCount = latest.importantCount,
-                    usefulCount = latest.usefulCount,
-                    normalCount = latest.normalCount,
-                    lowValueCount = latest.lowValueCount,
-                    spamCount = latest.spamCount,
-                    suppressedCount = latest.suppressedCount,
-                    noiseReductionPercent = latest.noiseReductionPercent,
-                    topApps = emptyList(), // Would need parsing if stored
-                    createdAt = latest.createdAt
-                )
-                _uiState.value = _uiState.value.copy(latestSummary = summary)
+                _uiState.value = _uiState.value.copy(latestSummary = latest.toDomainModel())
             }
         }
     }
 
     fun onSetSuppressionEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPreferenceDataStore.setSuppressionEnabled(enabled)
-        }
+        viewModelScope.launch { userPreferenceDataStore.setSuppressionEnabled(enabled) }
     }
 
     fun onSetLearningEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            userPreferenceDataStore.setLearningEnabled(enabled)
-        }
+        viewModelScope.launch { userPreferenceDataStore.setLearningEnabled(enabled) }
     }
 
     fun onSetDarkMode(enabled: Boolean) {
-        viewModelScope.launch {
-            userPreferenceDataStore.setDarkModeEnabled(enabled)
-        }
+        viewModelScope.launch { userPreferenceDataStore.setDarkModeEnabled(enabled) }
     }
 
     fun onSetDataRetentionDays(days: Int) {
-        viewModelScope.launch {
-            userPreferenceDataStore.setDataRetentionDays(days)
-        }
+        viewModelScope.launch { userPreferenceDataStore.setDataRetentionDays(days) }
     }
 
     fun onSetSummaryFrequency(frequency: String) {
-        viewModelScope.launch {
-            userPreferenceDataStore.setSummaryFrequency(frequency)
-        }
+        viewModelScope.launch { userPreferenceDataStore.setSummaryFrequency(frequency) }
     }
 
     fun onDeleteAllData() {
         viewModelScope.launch {
-            // Delete all data from all tables
+            // Preserve a few display preferences before wiping
+            val currentPrefs = userPreferenceDataStore.userPreference.first()
+
             notificationDao.deleteAll()
             feedbackDao.deleteAll()
             appPreferenceDao.deleteAll()
@@ -161,10 +164,22 @@ class SettingsViewModel @Inject constructor(
             analyticsDao.deleteAll()
             summaryDao.deleteAll()
 
-            // Reset DataStore preferences (keep onboardingComplete and darkModeEnabled)
-            val currentPrefs = userPreferenceDataStore.userPreference.first()
-            userPreferenceDataStore.resetToDefaults()
+            // FIX 5D: UserPreferenceDataStore has no resetToDefaults() method.
+            // Replace with explicit calls to each individual setter using default values
+            // from UserPreference's default constructor.
+            userPreferenceDataStore.setSuppressionEnabled(false)
+            userPreferenceDataStore.setLearningEnabled(true)
+            userPreferenceDataStore.setSummaryEnabled(true)
+            userPreferenceDataStore.setSummaryFrequency("daily")
+            userPreferenceDataStore.setQuietHoursEnabled(true)
+            userPreferenceDataStore.setQuietHoursStart(23)
+            userPreferenceDataStore.setQuietHoursEnd(7)
+            userPreferenceDataStore.setFocusModeEnabled(false)
+            userPreferenceDataStore.setDataRetentionDays(30)
+            userPreferenceDataStore.setOemBannerDismissed(false)
+            // Keep onboarding complete so the user isn't shown setup again
             userPreferenceDataStore.setOnboardingComplete()
+            // Restore dark-mode preference so the theme doesn't unexpectedly flip
             userPreferenceDataStore.setDarkModeEnabled(currentPrefs.darkModeEnabled)
 
             _events.emit(SettingsEvent.DataDeleted)
@@ -175,42 +190,14 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val notifications = notificationDao.getAllNotifications().first()
-                val records = notifications.map { entity ->
-                    com.notifiq.core.model.NotificationRecord(
-                        id = entity.id,
-                        key = entity.key,
-                        packageName = entity.packageName,
-                        appName = entity.appName,
-                        title = entity.title,
-                        text = entity.text,
-                        subText = entity.subText,
-                        bigText = entity.bigText,
-                        postTime = entity.postTime,
-                        channelId = entity.channelId,
-                        channelName = entity.channelName,
-                        groupKey = entity.groupKey,
-                        category = entity.category,
-                        priority = entity.priority,
-                        importance = entity.importance,
-                        classificationLabel = ClassificationLabel.valueOf(entity.classificationLabel),
-                        classificationScore = entity.classificationScore,
-                        classificationReasons = entity.classificationReasons,
-                        action = com.notifiq.core.model.NotificationAction.valueOf(entity.action),
-                        isRead = entity.isRead,
-                        isSuppressed = entity.isSuppressed,
-                        isArchived = entity.isArchived,
-                        rawPayloadHash = entity.rawPayloadHash,
-                        createdAt = entity.createdAt,
-                        updatedAt = entity.updatedAt
-                    )
-                }
+                // FIX: use toDomainModel() instead of manual construction to avoid
+                // the classificationReasons String→List<String> mismatch.
+                val records = notifications.map { it.toDomainModel() }
 
-                val json = kotlinx.serialization.json.Json.encodeToString(
-                    kotlinx.serialization.builtins.ListSerializer(com.notifiq.core.model.NotificationRecord.serializer()),
-                    records
-                )
+                val serializer = ListSerializer(NotificationRecord.serializer())
+                val jsonString = Json.encodeToString(serializer, records)
 
-                _events.emit(SettingsEvent.DataExported(json))
+                _events.emit(SettingsEvent.DataExported(jsonString))
             } catch (e: Exception) {
                 _events.emit(SettingsEvent.ShowMessage("Export failed: ${e.message}"))
             }

@@ -23,6 +23,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// FIX 5A: InboxUiState was declared in both InboxUiState.kt AND here, causing a redeclaration
+// compile error. The canonical declaration lives here; InboxUiState.kt must be DELETED.
 data class InboxUiState(
     val searchQuery: String = "",
     val selectedFilter: ClassificationLabel? = null,
@@ -43,13 +45,6 @@ class InboxViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(InboxUiState())
     val uiState: StateFlow<InboxUiState> = _uiState.asStateFlow()
 
-    // Combine filter state for Pager
-    private val filterState = mapOf(
-        "query" to _searchQuery,
-        "filter" to _selectedFilter,
-        "unread" to _showUnreadOnly
-    )
-
     @OptIn(ExperimentalCoroutinesApi::class)
     val pagedNotifications: Flow<PagingData<NotificationRecord>> = _searchQuery
         .flatMapLatest { query ->
@@ -68,9 +63,7 @@ class InboxViewModel @Inject constructor(
                 pagingSourceFactory = { pagingSource }
             ).flow
         }
-        .map { pagingData ->
-            pagingData.map { entity -> entity.toDomainModel() }
-        }
+        .map { pagingData -> pagingData.map { entity -> entity.toDomainModel() } }
         .cachedIn(viewModelScope)
 
     init {
@@ -79,23 +72,17 @@ class InboxViewModel @Inject constructor(
 
     private fun loadFilterCounts() {
         viewModelScope.launch {
-            // Load counts for each filter
-            ClassificationLabel.entries.forEach { label ->
-                val count = notificationDao.getCountByLabel(label.name)
-                _uiState.value = _uiState.value.copy(
-                    filterCounts = _uiState.value.filterCounts + (label to count)
-                )
+            // FIX 3A dependency: getCountByLabel now exists in NotificationDao.
+            val counts = ClassificationLabel.entries.associate { label ->
+                label to notificationDao.getCountByLabel(label.name)
             }
+            _uiState.value = _uiState.value.copy(filterCounts = counts)
         }
     }
 
-    fun setSearchQuery(query: String) {
+    fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
         _uiState.value = _uiState.value.copy(searchQuery = query)
-    }
-
-    fun onSearchQueryChange(query: String) {
-        setSearchQuery(query)
     }
 
     fun onFilterSelected(label: ClassificationLabel?) {
@@ -116,7 +103,7 @@ class InboxViewModel @Inject constructor(
     }
 
     fun onUndoArchive(notificationId: String) {
-        // Not directly available, would need to implement
+        // Would need an un-archive query; no-op for now to avoid crash
     }
 
     fun onMarkImportant(notificationId: String) {

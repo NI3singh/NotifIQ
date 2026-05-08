@@ -34,23 +34,11 @@ data class AnalyticsUiState(
     val mostImportantApps: List<AppAnalyticsCount> = emptyList()
 )
 
-data class DayData(
-    val dayLabel: String,
-    val count: Int,
-    val isToday: Boolean
-)
+data class DayData(val dayLabel: String, val count: Int, val isToday: Boolean)
 
-data class LabelCount(
-    val label: ClassificationLabel,
-    val count: Int,
-    val percentage: Float
-)
+data class LabelCount(val label: ClassificationLabel, val count: Int, val percentage: Float)
 
-data class AppAnalyticsCount(
-    val packageName: String,
-    val appName: String,
-    val count: Int
-)
+data class AppAnalyticsCount(val packageName: String, val appName: String, val count: Int)
 
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
@@ -65,42 +53,60 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     private fun loadAnalytics() {
-        viewModelScope.launch {
-            val todayStart = DateTimeUtils.todayStartMillis()
+        val todayStart = DateTimeUtils.todayStartMillis()
 
-            combine(
-                notificationDao.getTodayCount(todayStart),
+        // FIX 7A: Kotlin's combine() only accepts named lambda parameters for up to 5 flows.
+        // The original code passed 6 flows with individual named params AND then tried to
+        // destructure the Triple result in collect{}, causing type-inference failures.
+        //
+        // Fix: split into two valid combines —
+        //   inner: 5 label-count flows → IntArray
+        //   outer: total-count flow + inner → full UI state update
+        viewModelScope.launch {
+            val labelCountsFlow = combine(
                 notificationDao.getTodayCountByLabel(ClassificationLabel.IMPORTANT.name, todayStart),
                 notificationDao.getTodayCountByLabel(ClassificationLabel.USEFUL.name, todayStart),
                 notificationDao.getTodayCountByLabel(ClassificationLabel.NORMAL.name, todayStart),
                 notificationDao.getTodayCountByLabel(ClassificationLabel.LOW_VALUE.name, todayStart),
                 notificationDao.getTodayCountByLabel(ClassificationLabel.SPAM.name, todayStart)
-            ) { values ->
-                val total = values[0] as Int
-                val important = values[1] as Int
-                val useful = values[2] as Int
-                val normal = values[3] as Int
-                val lowValue = values[4] as Int
-                val spam = values[5] as Int
+            ) { important, useful, normal, lowValue, spam ->
+                intArrayOf(important, useful, normal, lowValue, spam)
+            }
 
+            combine(
+                notificationDao.getTodayCount(todayStart),
+                labelCountsFlow
+            ) { total, counts ->
+                val important = counts[0]
+                val useful = counts[1]
+                val normal = counts[2]
+                val lowValue = counts[3]
+                val spam = counts[4]
                 val usefulRatio = if (total > 0) {
                     ((important + useful).toFloat() / total.toFloat()) * 100f
                 } else 0f
 
-                Triple(total, usefulRatio, Unit)
-            }.collect { (total, usefulRatio, _) ->
-                _uiState.value = _uiState.value.copy(
+                _uiState.value.copy(
                     isLoading = false,
                     todayTotal = total,
+                    todayImportant = important,
+                    todayUseful = useful,
+                    todayNormal = normal,
+                    todayLowValue = lowValue,
+                    todaySpam = spam,
                     usefulRatioPercent = usefulRatio
                 )
+            }.collect { state ->
+                _uiState.value = state
             }
         }
 
+        // Weekly bar chart data
         viewModelScope.launch {
-            // Load weekly data
             val weekAgo = DateTimeUtils.daysAgoMillis(7)
-            val notifications = notificationDao.getNotificationsBetween(weekAgo, System.currentTimeMillis())
+            val notifications = notificationDao.getNotificationsBetween(
+                weekAgo, System.currentTimeMillis()
+            )
             val records = notifications.map { it.toDomainModel() }
 
             val weeklyData = (6 downTo 0).map { daysAgo ->
@@ -117,18 +123,22 @@ class AnalyticsViewModel @Inject constructor(
                     isToday = daysAgo == 0
                 )
             }
-
             _uiState.value = _uiState.value.copy(weeklyData = weeklyData)
         }
 
+        // Top noisy and important apps
         viewModelScope.launch {
             val weekAgo = DateTimeUtils.daysAgoMillis(7)
-            val notifications = notificationDao.getNotificationsBetween(weekAgo, System.currentTimeMillis())
+            val notifications = notificationDao.getNotificationsBetween(
+                weekAgo, System.currentTimeMillis()
+            )
             val records = notifications.map { it.toDomainModel() }
 
-            // Noisiest apps
             val noisyApps = records
-                .filter { it.classificationLabel == ClassificationLabel.LOW_VALUE || it.classificationLabel == ClassificationLabel.SPAM }
+                .filter {
+                    it.classificationLabel == ClassificationLabel.LOW_VALUE ||
+                            it.classificationLabel == ClassificationLabel.SPAM
+                }
                 .groupBy { it.packageName }
                 .map { (pkg, recs) ->
                     AppAnalyticsCount(
@@ -140,9 +150,11 @@ class AnalyticsViewModel @Inject constructor(
                 .sortedByDescending { it.count }
                 .take(5)
 
-            // Most important apps
             val importantApps = records
-                .filter { it.classificationLabel == ClassificationLabel.IMPORTANT || it.classificationLabel == ClassificationLabel.USEFUL }
+                .filter {
+                    it.classificationLabel == ClassificationLabel.IMPORTANT ||
+                            it.classificationLabel == ClassificationLabel.USEFUL
+                }
                 .groupBy { it.packageName }
                 .map { (pkg, recs) ->
                     AppAnalyticsCount(

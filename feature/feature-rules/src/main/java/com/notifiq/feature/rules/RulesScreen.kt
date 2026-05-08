@@ -14,9 +14,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.ShieldOff
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -100,7 +100,7 @@ fun RulesScreen(
                     item {
                         SectionHeader(
                             title = "Blocked Apps",
-                            icon = Icons.Default.ShieldOff,
+                            icon = Icons.Default.Block,
                             iconTint = Color(0xFFF87171)
                         )
                     }
@@ -214,7 +214,7 @@ fun RulesScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         SectionHeader(
                             title = "Blocked Senders",
-                            icon = Icons.Default.ShieldOff,
+                            icon = Icons.Default.Block,
                             iconTint = Color(0xFFF87171)
                         )
                     }

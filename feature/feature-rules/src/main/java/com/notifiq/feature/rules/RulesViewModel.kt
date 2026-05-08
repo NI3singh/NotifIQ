@@ -22,21 +22,16 @@ import javax.inject.Inject
 
 data class RulesUiState(
     val isLoading: Boolean = true,
-    // App preferences
     val allowlistedApps: List<AppPreferenceEntity> = emptyList(),
     val blocklistedApps: List<AppPreferenceEntity> = emptyList(),
-    // Senders
     val allowlistedSenders: List<SenderEntity> = emptyList(),
     val blocklistedSenders: List<SenderEntity> = emptyList(),
-    // Keywords
     val mutedKeywords: List<RuleEntity> = emptyList(),
     val protectedKeywords: List<RuleEntity> = emptyList(),
-    // Settings from UserPreferenceDataStore
     val quietHoursEnabled: Boolean = false,
     val quietHoursStart: Int = 22,
     val quietHoursEnd: Int = 7,
     val focusModeEnabled: Boolean = false,
-    // Search
     val searchQuery: String = ""
 )
 
@@ -60,30 +55,41 @@ class RulesViewModel @Inject constructor(
 
     private fun loadRules() {
         viewModelScope.launch {
-            // Combine all flows
-            combine(
+            // FIX 7B (bonus): RulesViewModel had the same 6-named-param combine bug.
+            // combine() only supports named params for ≤5 flows.
+            // Fix: combine the 5 database flows first, then combine with userPreference.
+            val dbFlows = combine(
                 appPreferenceDao.getAllowlistedApps(),
                 appPreferenceDao.getBlocklistedApps(),
                 senderDao.getAllowlisted(),
                 senderDao.getBlocklisted(),
-                ruleDao.getAll(),
-                userPreferenceDataStore.userPreference
-            ) { allowlistedApps, blocklistedApps, allowlistedSenders, blocklistedSenders, allRules, userPref ->
-                // Filter keyword rules
-                val mutedRules = allRules.filter {
+                ruleDao.getAll()
+            ) { allowlistedApps, blocklistedApps, allowlistedSenders, blocklistedSenders, allRules ->
+                // Return as a data holder; can't use a plain list because types differ
+                DbSnapshot(
+                    allowlistedApps = allowlistedApps,
+                    blocklistedApps = blocklistedApps,
+                    allowlistedSenders = allowlistedSenders,
+                    blocklistedSenders = blocklistedSenders,
+                    allRules = allRules
+                )
+            }
+
+            combine(dbFlows, userPreferenceDataStore.userPreference) { db, userPref ->
+                val mutedRules = db.allRules.filter {
                     it.type == RuleType.KEYWORD.name &&
-                    (it.action == RuleAction.PENALIZE.name || it.action == RuleAction.BLOCK.name)
+                            (it.action == RuleAction.PENALIZE.name || it.action == RuleAction.BLOCK.name)
                 }
-                val protectedRules = allRules.filter {
+                val protectedRules = db.allRules.filter {
                     it.type == RuleType.KEYWORD.name && it.action == RuleAction.PROTECT.name
                 }
 
                 RulesUiState(
                     isLoading = false,
-                    allowlistedApps = allowlistedApps,
-                    blocklistedApps = blocklistedApps,
-                    allowlistedSenders = allowlistedSenders,
-                    blocklistedSenders = blocklistedSenders,
+                    allowlistedApps = db.allowlistedApps,
+                    blocklistedApps = db.blocklistedApps,
+                    allowlistedSenders = db.allowlistedSenders,
+                    blocklistedSenders = db.blocklistedSenders,
                     mutedKeywords = mutedRules,
                     protectedKeywords = protectedRules,
                     quietHoursEnabled = userPref.quietHoursEnabled,
@@ -98,8 +104,18 @@ class RulesViewModel @Inject constructor(
         }
     }
 
+    // Private snapshot to carry the 5 DB-flow results across the nested combine
+    private data class DbSnapshot(
+        val allowlistedApps: List<AppPreferenceEntity>,
+        val blocklistedApps: List<AppPreferenceEntity>,
+        val allowlistedSenders: List<SenderEntity>,
+        val blocklistedSenders: List<SenderEntity>,
+        val allRules: List<RuleEntity>
+    )
+
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
+        _uiState.value = _uiState.value.copy(searchQuery = query)
     }
 
     fun onAddAllowlistApp(packageName: String, appName: String) {
@@ -215,9 +231,7 @@ class RulesViewModel @Inject constructor(
     }
 
     fun onRemoveSenderRule(id: String) {
-        viewModelScope.launch {
-            senderDao.delete(id)
-        }
+        viewModelScope.launch { senderDao.delete(id) }
     }
 
     fun onAddMutedKeyword(keyword: String) {
@@ -259,21 +273,15 @@ class RulesViewModel @Inject constructor(
     }
 
     fun onRemoveKeywordRule(id: String) {
-        viewModelScope.launch {
-            ruleDao.delete(id)
-        }
+        viewModelScope.launch { ruleDao.delete(id) }
     }
 
     fun onToggleQuietHours(enabled: Boolean) {
-        viewModelScope.launch {
-            userPreferenceDataStore.setQuietHoursEnabled(enabled)
-        }
+        viewModelScope.launch { userPreferenceDataStore.setQuietHoursEnabled(enabled) }
     }
 
     fun onToggleFocusMode(enabled: Boolean) {
-        viewModelScope.launch {
-            userPreferenceDataStore.setFocusModeEnabled(enabled)
-        }
+        viewModelScope.launch { userPreferenceDataStore.setFocusModeEnabled(enabled) }
     }
 
     fun onUpdateQuietHours(start: Int, end: Int) {

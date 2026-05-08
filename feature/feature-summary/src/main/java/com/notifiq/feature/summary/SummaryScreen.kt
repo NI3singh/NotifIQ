@@ -19,7 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Spam
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -208,7 +208,7 @@ private fun SummaryCard(
 
             // Spam count
             SummaryStatRow(
-                icon = Icons.Default.Spam,
+                icon = Icons.Default.Warning,
                 label = "Spam Filtered",
                 value = summary.spamCount.toString(),
                 color = Color(0xFFF87171),

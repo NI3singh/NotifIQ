@@ -32,6 +32,7 @@ dependencies {
     implementation(project(":core:core-model"))
     implementation(project(":core:core-designsystem"))
     implementation(project(":core:core-database"))
+    implementation(project(":core:core-common"))
     implementation(project(":classification"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.material3)

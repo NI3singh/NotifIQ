@@ -1,8 +1,7 @@
 package com.notifiq.feature.onboarding
 
-import android.app.NotificationManager
 import android.content.Context
-import android.os.Build
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notifiq.core.datastore.UserPreferenceDataStore
@@ -21,20 +20,12 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
+    // FIX 5B: NotificationManager has no getEnabledNotificationListenerPackages() method.
+    // The correct API is NotificationManagerCompat.getEnabledListenerPackages(context)
+    // from androidx.core.app, available on all API levels NotifIQ supports (26+).
     fun isNotificationListenerEnabled(context: Context): Boolean {
-        // On API 33+ use the proper method
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            try {
-                val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                val enabledPackages = nm.getEnabledNotificationListenerPackages()
-                enabledPackages.contains(context.packageName)
-            } catch (e: Exception) {
-                false
-            }
-        } else {
-            // For older versions, we can't reliably check
-            // Default to false, user must verify manually
-            false
-        }
+        return NotificationManagerCompat
+            .getEnabledListenerPackages(context)
+            .contains(context.packageName)
     }
 }

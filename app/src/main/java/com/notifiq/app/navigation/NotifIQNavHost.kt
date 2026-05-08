@@ -40,8 +40,8 @@ fun NotifIQNavHost(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val showBottomBar = currentRoute in bottomTabRoutes
-
-    val startDestination = if (hasCompletedOnboarding) Routes.Home.route else Routes.Onboarding.route
+    val startDestination =
+        if (hasCompletedOnboarding) Routes.Home.route else Routes.Onboarding.route
 
     Scaffold(
         bottomBar = {
@@ -56,6 +56,7 @@ fun NotifIQNavHost(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Routes.Onboarding.route) {
+                // FIX 6A: OnboardingScreen declares its callback as onComplete, not onNavigateToHome.
                 OnboardingScreen(
                     onComplete = {
                         navController.navigate(Routes.Home.route) {
@@ -67,9 +68,11 @@ fun NotifIQNavHost(
 
             composable(Routes.Home.route) {
                 HomeScreen(
-                    onNavigateToInbox = { filter ->
+                    // FIX 6B: HomeScreen's parameter is onNavigateToInboxWithFilter, not onNavigateToInbox.
+                    onNavigateToInboxWithFilter = { filter ->
                         navController.navigate(Routes.Inbox.route)
                     },
+                    // FIX 5C: id is now String; createRoute accepts String.
                     onNavigateToDetail = { id ->
                         navController.navigate(Routes.Detail.createRoute(id))
                     },
@@ -81,6 +84,7 @@ fun NotifIQNavHost(
             }
 
             composable(Routes.Inbox.route) {
+                // FIX 5C: id is String from notification UUID.
                 InboxScreen(
                     onNavigateToDetail = { id ->
                         navController.navigate(Routes.Detail.createRoute(id))
@@ -104,11 +108,15 @@ fun NotifIQNavHost(
                 )
             }
 
+            // FIX 5C: Use NavType.StringType and getString instead of LongType/getLong.
             composable(
                 route = Routes.Detail.route,
-                arguments = listOf(navArgument("notificationId") { type = NavType.LongType })
+                arguments = listOf(
+                    navArgument("notificationId") { type = NavType.StringType }
+                )
             ) { backStackEntry ->
-                val notificationId = backStackEntry.arguments?.getLong("notificationId") ?: 0L
+                val notificationId =
+                    backStackEntry.arguments?.getString("notificationId") ?: ""
                 DetailScreen(
                     notificationId = notificationId,
                     onNavigateBack = { navController.popBackStack() }

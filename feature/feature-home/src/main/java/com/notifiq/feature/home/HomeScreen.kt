@@ -1,9 +1,6 @@
 package com.notifiq.feature.home
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,14 +9,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Zap
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.notifiq.core.designsystem.component.LoadingState
@@ -49,7 +43,8 @@ import com.notifiq.core.model.ClassificationLabel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onNavigateToDetail: (Long) -> Unit,
+    // FIX 5C: changed from (Long) to (String) — notification IDs are UUID strings.
+    onNavigateToDetail: (String) -> Unit,
     onNavigateToSettings: () -> Unit = {},
     onNavigateToInboxWithFilter: ((String?) -> Unit)? = null,
     userPreferenceDataStore: UserPreferenceDataStore? = null,
@@ -82,24 +77,18 @@ fun HomeScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Permission health banner (if access disabled)
-                item {
-                    PermissionHealthBanner()
-                }
+                item { PermissionHealthBanner() }
 
-                // OEM instructions banner (for aggressive OEMs)
+                // FIX 5E: OemInstructionsBanner signature is (onDismiss, modifier).
+                // Removed the non-existent userPreferenceDataStore parameter.
                 if (userPreferenceDataStore != null) {
                     item {
                         OemInstructionsBanner(
-                            userPreferenceDataStore = userPreferenceDataStore,
-                            onDismiss = {
-                                viewModel.dismissOemBanner()
-                            }
+                            onDismiss = { viewModel.dismissOemBanner() }
                         )
                     }
                 }
 
-                // Stats grid (2x2)
                 item {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -108,18 +97,22 @@ fun HomeScreen(
                         StatCard(
                             title = "Important",
                             value = uiState.importantCount.toString(),
-                            icon = Icons.Default.Zap,
+                            icon = Icons.Default.FlashOn,
                             iconTint = Color(0xFFFF8A4C),
                             modifier = Modifier.weight(1f),
-                            onClick = { onNavigateToInboxWithFilter?.invoke(ClassificationLabel.IMPORTANT.name) }
+                            onClick = {
+                                onNavigateToInboxWithFilter?.invoke(ClassificationLabel.IMPORTANT.name)
+                            }
                         )
                         StatCard(
                             title = "Useful",
                             value = uiState.usefulCount.toString(),
-                            icon = Icons.Default.Zap,
+                            icon = Icons.Default.FlashOn,
                             iconTint = Color(0xFF34D399),
                             modifier = Modifier.weight(1f),
-                            onClick = { onNavigateToInboxWithFilter?.invoke(ClassificationLabel.USEFUL.name) }
+                            onClick = {
+                                onNavigateToInboxWithFilter?.invoke(ClassificationLabel.USEFUL.name)
+                            }
                         )
                     }
                 }
@@ -133,7 +126,7 @@ fun HomeScreen(
                         StatCard(
                             title = "Filtered",
                             value = filteredCount.toString(),
-                            icon = Icons.Default.Zap,
+                            icon = Icons.Default.FlashOn,
                             iconTint = Color(0xFFFACC15),
                             modifier = Modifier.weight(1f),
                             onClick = { onNavigateToInboxWithFilter?.invoke(null) }
@@ -141,15 +134,16 @@ fun HomeScreen(
                         StatCard(
                             title = "Spam",
                             value = uiState.spamCount.toString(),
-                            icon = Icons.Default.Zap,
+                            icon = Icons.Default.FlashOn,
                             iconTint = Color(0xFFF87171),
                             modifier = Modifier.weight(1f),
-                            onClick = { onNavigateToInboxWithFilter?.invoke(ClassificationLabel.SPAM.name) }
+                            onClick = {
+                                onNavigateToInboxWithFilter?.invoke(ClassificationLabel.SPAM.name)
+                            }
                         )
                     }
                 }
 
-                // Noise Reduction progress bar
                 item {
                     Column(
                         modifier = Modifier
@@ -184,7 +178,6 @@ fun HomeScreen(
                     }
                 }
 
-                // Recent Important section
                 if (uiState.recentImportantNotifications.isNotEmpty()) {
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -200,17 +193,19 @@ fun HomeScreen(
                             appName = notification.appName,
                             title = notification.title,
                             text = notification.text,
-                            timestamp = notification.postedTime,
+                            // FIX 4A: postTime is the correct field name on NotificationRecord.
+                            // postedTime does not exist.
+                            timestamp = notification.postTime,
                             label = notification.classificationLabel,
                             confidence = notification.classificationScore,
                             isSuppressed = notification.isSuppressed,
                             isRead = notification.isRead,
+                            // FIX 5C: notification.id is a String UUID; lambda now accepts String.
                             onClick = { onNavigateToDetail(notification.id) }
                         )
                     }
                 }
 
-                // Top Noisy Apps section
                 if (uiState.topNoisyApps.isNotEmpty()) {
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -243,9 +238,7 @@ private fun NoisyAppRow(
     maxCount: Int,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier.padding(vertical = 8.dp)
-    ) {
+    Column(modifier = modifier.padding(vertical = 8.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,

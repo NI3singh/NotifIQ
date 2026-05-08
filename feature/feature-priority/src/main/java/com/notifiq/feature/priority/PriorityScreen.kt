@@ -9,12 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PushPin
@@ -25,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -44,7 +41,8 @@ import com.notifiq.core.designsystem.component.NotificationCard
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PriorityScreen(
-    onNavigateToDetail: (Long) -> Unit,
+    // FIX 5C: notification IDs are UUID strings, not Longs.
+    onNavigateToDetail: (String) -> Unit,
     viewModel: PriorityViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -91,7 +89,6 @@ fun PriorityScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Pinned Sources horizontal row
                 if (uiState.pinnedSources.isNotEmpty()) {
                     item {
                         Column {
@@ -101,9 +98,7 @@ fun PriorityScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(12.dp))
-                            LazyRow(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 items(uiState.pinnedSources) { source ->
                                     PinnedSourceChip(
                                         packageName = source.packageName,
@@ -116,7 +111,6 @@ fun PriorityScreen(
                     }
                 }
 
-                // Notification list
                 items(
                     items = uiState.notifications,
                     key = { it.id }
@@ -125,11 +119,13 @@ fun PriorityScreen(
                         appName = notification.appName,
                         title = notification.title,
                         text = notification.text,
-                        timestamp = notification.postedTime,
+                        // FIX 4A: NotificationRecord has postTime, not postedTime.
+                        timestamp = notification.postTime,
                         label = notification.classificationLabel,
                         confidence = notification.classificationScore,
                         isSuppressed = notification.isSuppressed,
                         isRead = notification.isRead,
+                        // FIX 5C: notification.id is a String UUID.
                         onClick = { onNavigateToDetail(notification.id) }
                     )
                 }
@@ -153,10 +149,7 @@ private fun PinnedSourceChip(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AppIconResolver(
-                packageName = packageName,
-                size = 32.dp
-            )
+            AppIconResolver(packageName = packageName, size = 32.dp)
             Spacer(modifier = Modifier.width(8.dp))
             Column {
                 Text(

@@ -3,7 +3,7 @@ package com.notifiq.feature.priority
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.notifiq.core.database.dao.NotificationDao
-import com.notifiq.core.model.ClassificationLabel
+import com.notifiq.core.database.mapper.toDomainModel
 import com.notifiq.core.model.NotificationRecord
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,38 +39,15 @@ class PriorityViewModel @Inject constructor(
 
     private fun loadPriorityNotifications() {
         viewModelScope.launch {
-            notificationDao.getPriorityNotifications().collect { notifications ->
-                val records = notifications.map { entity ->
-                    NotificationRecord(
-                        id = entity.id,
-                        key = entity.key,
-                        packageName = entity.packageName,
-                        appName = entity.appName,
-                        title = entity.title,
-                        text = entity.text,
-                        subText = entity.subText,
-                        bigText = entity.bigText,
-                        postTime = entity.postTime,
-                        channelId = entity.channelId,
-                        channelName = entity.channelName,
-                        groupKey = entity.groupKey,
-                        category = entity.category,
-                        priority = entity.priority,
-                        importance = entity.importance,
-                        classificationLabel = ClassificationLabel.valueOf(entity.classificationLabel),
-                        classificationScore = entity.classificationScore,
-                        classificationReasons = entity.classificationReasons,
-                        action = com.notifiq.core.model.NotificationAction.valueOf(entity.action),
-                        isRead = entity.isRead,
-                        isSuppressed = entity.isSuppressed,
-                        isArchived = entity.isArchived,
-                        rawPayloadHash = entity.rawPayloadHash,
-                        createdAt = entity.createdAt,
-                        updatedAt = entity.updatedAt
-                    )
-                }
+            notificationDao.getPriorityNotifications().collect { entities ->
+                // FIX 4B: The old code manually constructed NotificationRecord and set
+                //   classificationReasons = entity.classificationReasons
+                // but entity.classificationReasons is a raw JSON String while
+                // NotificationRecord.classificationReasons expects List<String>.
+                // Using toDomainModel() from EntityMappers handles the JSON decoding correctly,
+                // matching exactly how HomeViewModel and InboxViewModel already do it.
+                val records = entities.map { it.toDomainModel() }
 
-                // Compute pinned sources (apps with important notifications)
                 val sourceCounts = records
                     .groupBy { it.packageName }
                     .map { (pkg, notifs) ->

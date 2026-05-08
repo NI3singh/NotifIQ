@@ -37,7 +37,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -47,13 +46,15 @@ import com.notifiq.core.designsystem.component.CategoryChip
 import com.notifiq.core.designsystem.component.ConfidenceBadge
 import com.notifiq.core.designsystem.component.FeedbackActionBar
 import com.notifiq.core.designsystem.component.LoadingState
-import com.notifiq.core.designsystem.component.NotificationCard
 import com.notifiq.core.designsystem.theme.color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
-    notificationId: Long,
+    // FIX 5C: NotificationRecord.id is a UUID String. Changed from Long to String.
+    // DetailViewModel.savedStateHandle.get<String>() already expected a String, so only
+    // this composable parameter type needed updating.
+    notificationId: String,
     onNavigateBack: () -> Unit,
     viewModel: DetailViewModel = hiltViewModel()
 ) {
@@ -63,9 +64,7 @@ fun DetailScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is DetailEvent.FeedbackGiven -> {
-                    snackbarHostState.showSnackbar(event.message)
-                }
+                is DetailEvent.FeedbackGiven -> snackbarHostState.showSnackbar(event.message)
             }
         }
     }
@@ -96,7 +95,6 @@ fun DetailScreen(
                         .padding(paddingValues)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    // Main content card with left accent stripe
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -107,30 +105,23 @@ fun DetailScreen(
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            // 4dp left accent stripe
                             Box(
                                 modifier = Modifier
                                     .width(4.dp)
                                     .height(180.dp)
                                     .background(notification.classificationLabel.color(false))
                             )
-
                             Column(
                                 modifier = Modifier
                                     .weight(1f)
                                     .padding(16.dp)
                             ) {
-                                // App icon, name, channel, timestamp
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     AppIconResolver(
                                         packageName = notification.packageName,
                                         size = 48.dp
                                     )
-
                                     Spacer(modifier = Modifier.width(12.dp))
-
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = notification.appName,
@@ -138,32 +129,28 @@ fun DetailScreen(
                                             fontWeight = FontWeight.SemiBold
                                         )
                                         Text(
-                                            text = notification.channelName ?: "Default",
+                                            text = notification.channelName.ifBlank { "Default" },
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
+                                        // postTime is the correct field on NotificationRecord
                                         Text(
                                             text = DateTimeUtils.formatTimestamp(notification.postTime),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
-
                                     CategoryChip(label = notification.classificationLabel)
                                 }
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
-                                // Title
                                 Text(
                                     text = notification.title,
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold
                                 )
-
                                 Spacer(modifier = Modifier.height(8.dp))
-
-                                // Body text (full, not truncated)
                                 Text(
                                     text = notification.text,
                                     style = MaterialTheme.typography.bodyLarge,
@@ -173,7 +160,6 @@ fun DetailScreen(
                         }
                     }
 
-                    // AI Classification card
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -182,28 +168,19 @@ fun DetailScreen(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         )
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
                             Text(
                                 text = "AI Classification",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
-
                             Spacer(modifier = Modifier.height(12.dp))
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 CategoryChip(label = notification.classificationLabel)
                                 Spacer(modifier = Modifier.width(12.dp))
                                 ConfidenceBadge(confidence = notification.classificationScore)
                             }
-
                             Spacer(modifier = Modifier.height(12.dp))
-
-                            // Horizontal confidence bar
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -220,18 +197,14 @@ fun DetailScreen(
                                 )
                             }
 
-                            // Reasons section
                             if (notification.classificationReasons.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(16.dp))
-
                                 Text(
                                     text = "Reasons",
                                     style = MaterialTheme.typography.titleSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-
                                 Spacer(modifier = Modifier.height(8.dp))
-
                                 notification.classificationReasons.forEach { reason ->
                                     Row(
                                         modifier = Modifier.padding(vertical = 4.dp),
@@ -255,7 +228,6 @@ fun DetailScreen(
                         }
                     }
 
-                    // Feedback Action Bar
                     FeedbackActionBar(
                         onMarkImportant = viewModel::onMarkImportant,
                         onMarkUseful = viewModel::onMarkUseful,
@@ -266,7 +238,6 @@ fun DetailScreen(
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
 
-                    // Source Metadata card
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -275,20 +246,16 @@ fun DetailScreen(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         )
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
                             Text(
                                 text = "Source Metadata",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
-
                             Spacer(modifier = Modifier.height(12.dp))
-
                             MetadataRow("Package", notification.packageName)
                             MetadataRow("Channel ID", notification.channelId)
-                            MetadataRow("Category", notification.category ?: "Unknown")
+                            MetadataRow("Category", notification.category.ifBlank { "Unknown" })
                             MetadataRow("Importance", notification.importance.toString())
                             MetadataRow("Action", notification.action.name)
                             MetadataRow("Timestamp", DateTimeUtils.formatTimestamp(notification.postTime))

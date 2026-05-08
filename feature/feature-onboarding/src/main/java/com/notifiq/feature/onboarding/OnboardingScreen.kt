@@ -95,7 +95,10 @@ private val onboardingPages = listOf(
 
 @Composable
 fun OnboardingScreen(
-    onNavigateToHome: () -> Unit,
+    // FIX 6A: Renamed from onNavigateToHome to onComplete so it matches the NavHost call
+    //   OnboardingScreen(onComplete = { ... })
+    // The old name caused an "unresolved reference: onComplete" compile error in NavHost.
+    onComplete: () -> Unit,
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -107,20 +110,18 @@ fun OnboardingScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Skip button at top right
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
         ) {
             TextButton(onClick = {
                 viewModel.completeOnboarding()
-                onNavigateToHome()
+                onComplete()
             }) {
                 Text("Skip")
             }
         }
 
-        // Pager content
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.weight(1f)
@@ -128,7 +129,6 @@ fun OnboardingScreen(
             OnboardingPageContent(page = onboardingPages[page])
         }
 
-        // Page indicator dots
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -150,19 +150,23 @@ fun OnboardingScreen(
             }
         }
 
-        // Bottom button
         Button(
             onClick = {
-                if (pagerState.currentPage == onboardingPages.size - 1) {
-                    viewModel.completeOnboarding()
-                    onNavigateToHome()
-                } else if (pagerState.currentPage == 2) {
-                    // Page 3 is "Allow Access" - open notification listener settings
-                    val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
-                    context.startActivity(intent)
-                } else {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                when {
+                    pagerState.currentPage == onboardingPages.size - 1 -> {
+                        viewModel.completeOnboarding()
+                        onComplete()
+                    }
+                    pagerState.currentPage == 2 -> {
+                        val intent = Intent(
+                            "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"
+                        )
+                        context.startActivity(intent)
+                    }
+                    else -> {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                        }
                     }
                 }
             },
@@ -190,7 +194,6 @@ private fun OnboardingPageContent(page: OnboardingPage) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Icon in colored circle
         Box(
             modifier = Modifier
                 .size(88.dp)
@@ -214,25 +217,18 @@ private fun OnboardingPageContent(page: OnboardingPage) {
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-
         Spacer(modifier = Modifier.height(8.dp))
-
         Text(
             text = page.subtitle,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
-
         Spacer(modifier = Modifier.height(32.dp))
 
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             page.bullets.forEach { bullet ->
-                Row(
-                    verticalAlignment = Alignment.Top
-                ) {
+                Row(verticalAlignment = Alignment.Top) {
                     Text(
                         text = "•",
                         style = MaterialTheme.typography.bodyLarge,

@@ -32,6 +32,8 @@ dependencies {
     implementation(project(":core:core-model"))
     implementation(project(":core:core-designsystem"))
     implementation(project(":core:core-database"))
+    implementation(project(":core:core-datastore"))          // ADDED — fixes HomeViewModel/Hilt
+    implementation(project(":core:core-common"))
     implementation(project(":classification"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.material3)
@@ -46,4 +48,5 @@ dependencies {
     implementation(libs.room.runtime)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
+
 }

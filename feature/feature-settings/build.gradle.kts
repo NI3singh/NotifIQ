@@ -31,6 +31,7 @@ android {
 dependencies {
     implementation(project(":core:core-model"))
     implementation(project(":core:core-designsystem"))
+    implementation(project(":core:core-database"))          // ADDED — SettingsViewModel injects 7 DAOs
     implementation(project(":core:core-datastore"))
     implementation(project(":classification"))
     implementation(platform(libs.androidx.compose.bom))
@@ -43,4 +44,8 @@ dependencies {
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.room.runtime)
+    ksp(libs.room.compiler)
+    implementation(libs.room.ktx)
+    implementation(libs.kotlinx.serialization.json)
 }

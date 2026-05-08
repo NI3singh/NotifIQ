@@ -46,7 +46,8 @@ import com.notifiq.core.model.NotificationRecord
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InboxScreen(
-    onNavigateToDetail: (Long) -> Unit,
+    // FIX 5C: notification IDs are String UUIDs — changed from (Long) to (String).
+    onNavigateToDetail: (String) -> Unit,
     viewModel: InboxViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -79,7 +80,6 @@ fun InboxScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Search bar
             SearchBar(
                 query = uiState.searchQuery,
                 onQueryChange = viewModel::onSearchQueryChange,
@@ -89,14 +89,12 @@ fun InboxScreen(
                 placeholder = "Search notifications..."
             )
 
-            // Filter chips row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // All chip
                 FilterChip(
                     selected = uiState.selectedFilter == null,
                     onClick = { viewModel.onFilterSelected(null) },
@@ -114,7 +112,6 @@ fun InboxScreen(
                     }
                 )
 
-                // Label chips
                 ClassificationLabel.entries.take(4).forEach { label ->
                     val count = uiState.filterCounts[label] ?: 0
                     FilterChip(
@@ -135,7 +132,6 @@ fun InboxScreen(
                 }
             }
 
-            // Unread only toggle
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -146,18 +142,16 @@ fun InboxScreen(
                     Text(
                         text = if (uiState.showUnreadOnly) "Show all" else "Unread only",
                         style = MaterialTheme.typography.labelMedium,
-                        color = if (uiState.showUnreadOnly) {
+                        color = if (uiState.showUnreadOnly)
                             MaterialTheme.colorScheme.primary
-                        } else {
+                        else
                             MaterialTheme.colorScheme.onSurfaceVariant
-                        }
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Handle loading and empty states
             when {
                 pagedNotifications.loadState.refresh is LoadState.Loading -> {
                     LoadingState()
@@ -169,16 +163,18 @@ fun InboxScreen(
                         message = "Something went wrong. Tap to retry."
                     )
                 }
-                pagedNotifications.itemCount == 0 && pagedNotifications.loadState.refresh is LoadState.NotLoading -> {
+                pagedNotifications.itemCount == 0 &&
+                        pagedNotifications.loadState.refresh is LoadState.NotLoading -> {
                     EmptyState(
                         icon = Icons.Outlined.Email,
                         title = "No notifications",
-                        message = if (uiState.searchQuery.isNotBlank()) {
-                            "No notifications match your search."
-                        } else if (uiState.selectedFilter != null) {
-                            "No ${uiState.selectedFilter?.name?.lowercase()?.replace("_", " ")} notifications."
-                        } else {
-                            "Your inbox is empty."
+                        message = when {
+                            uiState.searchQuery.isNotBlank() ->
+                                "No notifications match your search."
+                            uiState.selectedFilter != null ->
+                                "No ${uiState.selectedFilter?.name?.lowercase()
+                                    ?.replace("_", " ")} notifications."
+                            else -> "Your inbox is empty."
                         }
                     )
                 }
@@ -204,12 +200,16 @@ fun InboxScreen(
                                 appName = notification.appName,
                                 title = notification.title,
                                 text = notification.text,
+                                // notification.postTime is the correct field on NotificationRecord
                                 timestamp = notification.postTime,
                                 label = notification.classificationLabel,
                                 confidence = notification.classificationScore,
                                 isSuppressed = notification.isSuppressed,
                                 isRead = notification.isRead,
-                                onClick = { onNavigateToDetail(notification.id.toLongOrNull() ?: 0L) },
+                                // FIX 5C: notification.id is a UUID String.
+                                // The old code did id.toLongOrNull() ?: 0L which always
+                                // returned 0 for UUIDs, making every detail load fail.
+                                onClick = { onNavigateToDetail(notification.id) },
                                 onSwipeLeft = {
                                     lastArchivedId = notification.id
                                     viewModel.onArchive(notification.id)
@@ -223,7 +223,6 @@ fun InboxScreen(
                             )
                         }
 
-                        // Handle append loading state
                         if (pagedNotifications.loadState.append is LoadState.Loading) {
                             item {
                                 LoadingState(modifier = Modifier.height(48.dp))
@@ -235,7 +234,6 @@ fun InboxScreen(
         }
     }
 
-    // Show snackbar for archive action
     LaunchedEffect(lastArchivedId) {
         lastArchivedId?.let { id ->
             val result = snackbarHostState.showSnackbar(
