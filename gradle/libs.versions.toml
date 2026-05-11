@@ -1,9 +1,9 @@
 [versions]
 agp = "9.2.1"
-kotlin = "2.0.21"
+kotlin = "2.2.10"
 # KSP format is always {kotlin_version}-{ksp_patch_release}.
-# 2.0.21-2.0.1 is the published KSP release for Kotlin 2.0.21 (released Jul 17, 2025).
-ksp = "2.0.21-2.0.1"
+# AGP 9.x has a runtime dependency on Kotlin Gradle Plugin 2.2.10 and pairs with KSP 2.2.10-2.0.2.
+ksp = "2.2.10-2.0.2"
 coreKtx = "1.15.0"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
