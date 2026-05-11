@@ -37,9 +37,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
 
     buildFeatures {
         compose = true
@@ -66,7 +63,7 @@ dependencies {
     implementation(project(":feature:feature-rules"))
     implementation(project(":feature:feature-settings"))
     implementation(project(":feature:feature-summary"))
-    ksp("androidx.hilt:hilt-compiler:1.2.0")
+    ksp(libs.androidx.hilt.compiler)
     // Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.material3)

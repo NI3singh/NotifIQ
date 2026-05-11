@@ -18,6 +18,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+
     buildFeatures {
         compose = true
     }
