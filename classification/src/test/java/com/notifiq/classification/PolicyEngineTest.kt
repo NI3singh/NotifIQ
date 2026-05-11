@@ -6,6 +6,7 @@ import com.notifiq.core.model.ClassificationResult
 import com.notifiq.core.model.NotificationAction
 import com.notifiq.core.model.UserPreference
 import io.mockk.coEvery
+import kotlinx.coroutines.runBlocking
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
@@ -37,11 +38,9 @@ class PolicyEngineTest {
     }
 
     @Test
-    fun `Safety protected notification always returns SHOW_AND_INBOX`() {
-        // OTP text triggers safety protection
-        val classification = createClassificationResult(ClassificationLabel.LOW_VALUE)
+    fun `Safety protected notification always returns SHOW_AND_INBOX`() = runBlocking {
         val result = policyEngine.decide(
-            classification = classification,
+            classification = createClassificationResult(ClassificationLabel.LOW_VALUE),
             packageName = "com.example.app",
             text = "Your OTP is 123456",
             bigText = "",
@@ -49,12 +48,11 @@ class PolicyEngineTest {
             importance = 3,
             postTime = System.currentTimeMillis()
         )
-
-        assertEquals("Safety protected should always return SHOW_AND_INBOX", NotificationAction.SHOW_AND_INBOX, result)
+        assertEquals(NotificationAction.SHOW_AND_INBOX, result)
     }
 
     @Test
-    fun `Suppression disabled always returns SHOW_AND_INBOX`() {
+    fun `Suppression disabled always returns SHOW_AND_INBOX`() = runBlocking {
         // Setup: suppression disabled
         coEvery { userPreferenceDataStore.userPreference } returns flowOf(
             UserPreference(suppressionEnabled = false)
@@ -75,7 +73,7 @@ class PolicyEngineTest {
     }
 
     @Test
-    fun `Suppression enabled with SPAM classification returns SUPPRESS`() {
+    fun `Suppression enabled with SPAM classification returns SUPPRESS`() = runBlocking {
         // Setup: suppression enabled, SPAM classification
         coEvery { userPreferenceDataStore.userPreference } returns flowOf(
             UserPreference(suppressionEnabled = true)
@@ -96,7 +94,7 @@ class PolicyEngineTest {
     }
 
     @Test
-    fun `Quiet hours active with NORMAL classification returns INBOX_ONLY`() {
+    fun `Quiet hours active with NORMAL classification returns INBOX_ONLY`() = runBlocking {
         // Setup: quiet hours enabled (23:00 - 07:00), current time mock handled by DateTimeUtils
         coEvery { userPreferenceDataStore.userPreference } returns flowOf(
             UserPreference(quietHoursEnabled = true, quietHoursStart = 23, quietHoursEnd = 7)
@@ -120,7 +118,7 @@ class PolicyEngineTest {
     }
 
     @Test
-    fun `Quiet hours active with IMPORTANT classification returns SHOW_AND_INBOX`() {
+    fun `Quiet hours active with IMPORTANT classification returns SHOW_AND_INBOX`() = runBlocking {
         // Setup: quiet hours enabled, IMPORTANT label should bypass
         coEvery { userPreferenceDataStore.userPreference } returns flowOf(
             UserPreference(quietHoursEnabled = true, quietHoursStart = 23, quietHoursEnd = 7)
@@ -141,7 +139,7 @@ class PolicyEngineTest {
     }
 
     @Test
-    fun `Focus mode active with LOW_VALUE returns INBOX_ONLY`() {
+    fun `Focus mode active with LOW_VALUE returns INBOX_ONLY`() = runBlocking {
         // Setup: focus mode enabled
         coEvery { userPreferenceDataStore.userPreference } returns flowOf(
             UserPreference(suppressionEnabled = true, focusModeEnabled = true)

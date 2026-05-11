@@ -6,6 +6,7 @@ import com.notifiq.core.model.ClassificationResult
 import com.notifiq.core.model.NotificationAction
 import com.notifiq.core.database.dao.AppPreferenceDao
 import com.notifiq.core.database.dao.FeedbackDao
+import com.notifiq.core.database.dao.NotificationDao
 import com.notifiq.core.database.dao.RuleDao
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -31,6 +32,8 @@ class ScoreAggregatorTest {
         val feedbackDao = mockk<FeedbackDao>(relaxed = true)
         val ruleDao = mockk<RuleDao>(relaxed = true)
 
+        val mockNotificationDao = mockk<NotificationDao>(relaxed = true)
+
         // Setup default mock behavior - return null for app preferences (no allowlist/blocklist)
         coEvery { appPreferenceDao.getByPackage(any()) } returns null
         coEvery { feedbackDao.getRecentByPackage(any(), any()) } returns emptyList()
@@ -40,7 +43,7 @@ class ScoreAggregatorTest {
         keywordScorer = KeywordScorer(ruleDao)
         appReputationScorer = AppReputationScorer()
         channelImportanceScorer = ChannelImportanceScorer()
-        frequencyScorer = FrequencyScorer()
+        frequencyScorer = FrequencyScorer(mockNotificationDao)
         timeContextScorer = TimeContextScorer()
 
         aggregator = ScoreAggregator(

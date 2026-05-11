@@ -14,8 +14,8 @@ class FrequencyScorer @Inject constructor(
 
     override fun score(context: ScoringContext): ScoringResult {
         return runBlocking {
-            val oneHourAgo = DateTimeUtils.daysAgoMillis(0) - (60 * 60 * 1000)
-            val oneDayAgo = DateTimeUtils.daysAgoMillis(1)
+            val oneHourAgo = System.currentTimeMillis() - (60 * 60 * 1000L) // ✅ actually 1 hour ago
+            val oneDayAgo = System.currentTimeMillis() - (24 * 60 * 60 * 1000L) // ✅ actually 24 hours ago
 
             val hourlyCount = notificationDao.getCountByPackageSince(context.packageName, oneHourAgo)
             val dailyCount = notificationDao.getCountByPackageSince(context.packageName, oneDayAgo)

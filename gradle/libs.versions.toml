@@ -1,10 +1,9 @@
 [versions]
 agp = "9.2.1"
-kotlin = "2.2.10"
+kotlin = "2.0.21"
 # KSP format is always {kotlin_version}-{ksp_patch_release}.
-# "2.2.10" alone is not a published artifact — it must include the KSP patch suffix.
-# 2.2.10-2.0.2 is the published KSP release for Kotlin 2.2.10 (released Aug 14, 2025).
-ksp = "2.2.10-2.0.2"
+# 2.0.21-2.0.1 is the published KSP release for Kotlin 2.0.21 (released Jul 17, 2025).
+ksp = "2.0.21-2.0.1"
 coreKtx = "1.15.0"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
@@ -97,3 +96,4 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+androidx-room = { id = "androidx.room", version.ref = "room" }
