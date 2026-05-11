@@ -19,8 +19,9 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-
-
+    room {
+        schemaDirectory("$projectDir/schemas")
+    }
 }
 
 dependencies {
