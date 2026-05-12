@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
@@ -33,16 +32,12 @@ android {
         }
     }
 
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
-    }
 
     buildFeatures {
         compose = true
@@ -69,7 +64,7 @@ dependencies {
     implementation(project(":feature:feature-rules"))
     implementation(project(":feature:feature-settings"))
     implementation(project(":feature:feature-summary"))
-    ksp("androidx.hilt:hilt-compiler:1.2.0")
+    ksp(libs.androidx.hilt.compiler)
     // Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.material3)
@@ -95,6 +90,9 @@ dependencies {
 
     // Core
     implementation(libs.androidx.core.ktx)
+
+    // Room
+    implementation(libs.room.runtime)
 
     // Material (for XML themes)
     implementation("com.google.android.material:material:1.12.0")
