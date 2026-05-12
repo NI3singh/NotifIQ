@@ -91,6 +91,9 @@ dependencies {
     // Core
     implementation(libs.androidx.core.ktx)
 
+    // Room
+    implementation(libs.room.runtime)
+
     // Material (for XML themes)
     implementation("com.google.android.material:material:1.12.0")
 
