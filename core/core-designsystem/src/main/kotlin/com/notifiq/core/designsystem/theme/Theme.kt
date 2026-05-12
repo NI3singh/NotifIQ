@@ -13,12 +13,12 @@ import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
     primary = DarkAccent,
-    onPrimary = DarkTextPrimary,
+    onPrimary = DarkBackground,
     primaryContainer = DarkAccentContainer,
     onPrimaryContainer = DarkTextPrimary,
-    secondary = DarkAccent,
+    secondary = DarkSecondaryAccent,
     onSecondary = DarkTextPrimary,
-    secondaryContainer = DarkSurface3,
+    secondaryContainer = DarkSecondaryAccentContainer,
     onSecondaryContainer = DarkTextPrimary,
     tertiary = DarkAccent,
     onTertiary = DarkTextPrimary,
@@ -36,12 +36,12 @@ private val DarkColorScheme = darkColorScheme(
 
 private val LightColorScheme = lightColorScheme(
     primary = LightAccent,
-    onPrimary = LightSurface,
+    onPrimary = LightTextPrimary,
     primaryContainer = LightAccentContainer,
     onPrimaryContainer = LightTextPrimary,
-    secondary = LightAccent,
+    secondary = LightSecondaryAccent,
     onSecondary = LightSurface,
-    secondaryContainer = LightSurface3,
+    secondaryContainer = LightSecondaryAccentContainer,
     onSecondaryContainer = LightTextPrimary,
     tertiary = LightAccent,
     onTertiary = LightSurface,

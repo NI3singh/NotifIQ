@@ -16,6 +16,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
@@ -60,10 +61,16 @@ fun SwipeableNotificationCard(
         enableDismissFromEndToStart = true,
         backgroundContent = {
             val direction = dismissState.dismissDirection
-            val color = when (direction) {
-                SwipeToDismissBoxValue.StartToEnd -> Color(0xFF34D399) // Green for Important
-                SwipeToDismissBoxValue.EndToStart -> Color(0xFFF87171) // Red for Spam/Archive
-                SwipeToDismissBoxValue.Settled -> Color.Transparent
+            val backgroundBrush = when (direction) {
+                SwipeToDismissBoxValue.StartToEnd -> Brush.horizontalGradient(
+                    listOf(Color(0xFF34D399), Color(0xFF34D399))
+                ) // Green for Important
+                SwipeToDismissBoxValue.EndToStart -> Brush.horizontalGradient(
+                    listOf(Color(0xFFE91E8C), Color(0xFFC2185B))
+                ) // Pink for Archive
+                SwipeToDismissBoxValue.Settled -> Brush.horizontalGradient(
+                    listOf(Color.Transparent, Color.Transparent)
+                )
             }
             val icon = when (direction) {
                 SwipeToDismissBoxValue.StartToEnd -> Icons.Default.Bolt
@@ -84,7 +91,7 @@ fun SwipeableNotificationCard(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(color)
+                    .background(backgroundBrush)
                     .padding(horizontal = 20.dp),
                 contentAlignment = alignment
             ) {

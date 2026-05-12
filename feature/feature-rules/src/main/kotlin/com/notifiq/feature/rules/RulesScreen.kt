@@ -183,7 +183,7 @@ fun RulesScreen(
                     SectionHeader(
                         title = "Protected Keywords",
                         icon = Icons.Default.Shield,
-                        iconTint = Color(0xFF6C9CFF),
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onAdd = {
                             keywordType = "protect"
                             showAddKeywordDialog = true

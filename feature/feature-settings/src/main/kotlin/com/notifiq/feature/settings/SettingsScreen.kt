@@ -170,7 +170,7 @@ fun SettingsScreen(
                             "Classification uses fixed rules only"
                         },
                         icon = Icons.Default.Psychology,
-                        iconTint = Color(0xFF6C9CFF),
+                        iconTint = MaterialTheme.colorScheme.primary,
                         checked = uiState.userPreference.learningEnabled,
                         onCheckedChange = viewModel::onSetLearningEnabled
                     )
@@ -259,7 +259,7 @@ fun SettingsScreen(
                         title = "Export Data",
                         subtitle = "Download your notification history as JSON",
                         icon = Icons.Default.FileDownload,
-                        iconTint = Color(0xFF6C9CFF),
+                        iconTint = MaterialTheme.colorScheme.primary,
                         onClick = viewModel::onExportData
                     )
                 }

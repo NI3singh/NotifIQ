@@ -98,7 +98,7 @@ fun HomeScreen(
                             title = "Important",
                             value = uiState.importantCount.toString(),
                             icon = Icons.Default.FlashOn,
-                            iconTint = Color(0xFFFF8A4C),
+                            iconTint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.weight(1f),
                             onClick = {
                                 onNavigateToInboxWithFilter?.invoke(ClassificationLabel.IMPORTANT.name)
@@ -127,7 +127,7 @@ fun HomeScreen(
                             title = "Filtered",
                             value = filteredCount.toString(),
                             icon = Icons.Default.FlashOn,
-                            iconTint = Color(0xFFFACC15),
+                            iconTint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.weight(1f),
                             onClick = { onNavigateToInboxWithFilter?.invoke(null) }
                         )

@@ -126,7 +126,7 @@ fun AnalyticsScreen(
                             title = "Low Value",
                             value = uiState.todayLowValue.toString(),
                             modifier = Modifier.weight(1f),
-                            backgroundColor = Color(0xFFFFF3E0)
+                            backgroundColor = Color(0xFFFFE5B0)
                         )
                         StatCardSimple(
                             title = "Spam",

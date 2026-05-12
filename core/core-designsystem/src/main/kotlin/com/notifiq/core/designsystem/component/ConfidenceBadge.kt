@@ -23,7 +23,7 @@ fun ConfidenceBadge(
     val color = when {
         confidence >= 0.65f -> Color(0xFF34D399) // Green
         confidence >= 0.40f -> Color(0xFFFACC15) // Yellow
-        else -> Color(0xFFF87171) // Red
+        else -> Color(0xFFE91E8C) // Pink
     }
 
     Box(

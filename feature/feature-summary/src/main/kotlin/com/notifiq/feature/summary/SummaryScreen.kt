@@ -200,7 +200,7 @@ private fun SummaryCard(
                 icon = Icons.Default.Shield,
                 label = "Useful",
                 value = summary.usefulCount.toString(),
-                color = Color(0xFF6C9CFF),
+                color = Color(0xFF34D399),
                 highlight = highlight
             )
 

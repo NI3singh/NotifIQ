@@ -10,8 +10,10 @@ val DarkSurface2 = Color(0xFF1C1C28)
 val DarkSurface3 = Color(0xFF262635)
 val DarkTextPrimary = Color(0xFFEEEEF4)
 val DarkTextSecondary = Color(0xFF9494A8)
-val DarkAccent = Color(0xFF7DA2FF)
-val DarkAccentContainer = Color(0xFF243B67)
+val DarkAccent = Color(0xFFFF9500)
+val DarkAccentContainer = Color(0xFF3A2500)
+val DarkSecondaryAccent = Color(0xFFE91E8C)
+val DarkSecondaryAccentContainer = Color(0xFF3A1028)
 val DarkTabBar = Color(0xFF0D0D14)
 
 // Light Mode Palette
@@ -21,8 +23,10 @@ val LightSurface2 = Color(0xFFEDEDF5)
 val LightSurface3 = Color(0xFFDDDDE8)
 val LightTextPrimary = Color(0xFF0F0F1A)
 val LightTextSecondary = Color(0xFF5A5A70)
-val LightAccent = Color(0xFF4B7EF5)
-val LightAccentContainer = Color(0xFFDDE6FF)
+val LightAccent = Color(0xFFFFAA00)
+val LightAccentContainer = Color(0xFFFFE5B0)
+val LightSecondaryAccent = Color(0xFFC2185B)
+val LightSecondaryAccentContainer = Color(0xFFFAD8E8)
 val LightTabBar = Color(0xFFFFFFFF)
 
 // Classification Label Colors - Dark Mode
@@ -30,7 +34,7 @@ val DarkImportant = Color(0xFFFF8A4C)
 val DarkUseful = Color(0xFF34D399)
 val DarkNormal = Color(0xFFA78BFA)
 val DarkLowValue = Color(0xFFFACC15)
-val DarkSpam = Color(0xFFF87171)
+val DarkSpam = Color(0xFFE91E8C)
 val DarkUnknown = Color(0xFF6B7280)
 
 // Classification Label Colors - Light Mode
@@ -38,7 +42,7 @@ val LightImportant = Color(0xFFE86400)
 val LightUseful = Color(0xFF059669)
 val LightNormal = Color(0xFF7C3AED)
 val LightLowValue = Color(0xFFB8960A)
-val LightSpam = Color(0xFFDC2626)
+val LightSpam = Color(0xFFC2185B)
 val LightUnknown = Color(0xFF4B5563)
 
 fun ClassificationLabel.color(isDark: Boolean): Color {

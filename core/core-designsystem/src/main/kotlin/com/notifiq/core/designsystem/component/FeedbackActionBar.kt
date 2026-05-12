@@ -53,7 +53,7 @@ fun FeedbackActionBar(
         FeedbackButton(
             icon = Icons.Default.DoNotDisturb,
             label = "Spam",
-            color = Color(0xFFF87171),
+            color = Color(0xFFE91E8C),
             onClick = onMarkSpam
         )
         FeedbackButton(
@@ -65,7 +65,7 @@ fun FeedbackActionBar(
         FeedbackButton(
             icon = Icons.Default.Shield,
             label = "Whitelist",
-            color = Color(0xFF4B7EF5),
+            color = Color(0xFFFFAA00),
             onClick = onWhitelist
         )
         FeedbackButton(

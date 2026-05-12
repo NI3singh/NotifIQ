@@ -50,7 +50,7 @@ private val onboardingPages = listOf(
     OnboardingPage(
         title = "Smart Notifications",
         icon = Icons.Default.LocalFireDepartment,
-        iconColor = Color(0xFF4B7EF5),
+        iconColor = Color(0xFFFFAA00),
         subtitle = "Intelligent notification classification",
         bullets = listOf(
             "Automatically classifies notifications by importance",
