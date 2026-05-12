@@ -33,7 +33,7 @@ object DatabaseModule {
             NotifIQDatabase::class.java,
             "notifiq_database"
         )
-            .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD)
+            .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
             .addCallback(SeedDatabaseCallback())
             .build()
     }
