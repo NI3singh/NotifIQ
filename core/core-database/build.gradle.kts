@@ -1,10 +1,9 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
-    id("androidx.room")
+    alias(libs.plugins.androidx.room)
 }
 
 android {
@@ -15,16 +14,15 @@ android {
         minSdk = 26
     }
 
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
+    room {
+        schemaDirectory("$projectDir/schemas")
     }
-
-
 }
 
 dependencies {
