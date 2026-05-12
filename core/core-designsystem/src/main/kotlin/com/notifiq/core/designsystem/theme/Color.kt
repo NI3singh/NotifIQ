@@ -10,7 +10,8 @@ val DarkSurface2 = Color(0xFF1C1C28)
 val DarkSurface3 = Color(0xFF262635)
 val DarkTextPrimary = Color(0xFFEEEEF4)
 val DarkTextSecondary = Color(0xFF9494A8)
-val DarkAccent = Color(0xFF6C9CFF)
+val DarkAccent = Color(0xFF7DA2FF)
+val DarkAccentContainer = Color(0xFF243B67)
 val DarkTabBar = Color(0xFF0D0D14)
 
 // Light Mode Palette
@@ -21,6 +22,7 @@ val LightSurface3 = Color(0xFFDDDDE8)
 val LightTextPrimary = Color(0xFF0F0F1A)
 val LightTextSecondary = Color(0xFF5A5A70)
 val LightAccent = Color(0xFF4B7EF5)
+val LightAccentContainer = Color(0xFFDDE6FF)
 val LightTabBar = Color(0xFFFFFFFF)
 
 // Classification Label Colors - Dark Mode
