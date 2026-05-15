@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.notifiq.worker"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
@@ -19,6 +19,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+
 }
 
 dependencies {
@@ -27,6 +28,7 @@ dependencies {
     implementation(project(":core:core-datastore"))
     implementation(project(":core:core-common"))
     implementation(project(":classification"))
+    implementation(libs.core.ktx)
     implementation(libs.workmanager.ktx)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)

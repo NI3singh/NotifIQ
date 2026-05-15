@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.notifiq.classification"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
@@ -19,6 +19,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+
 }
 
 dependencies {
@@ -26,6 +27,7 @@ dependencies {
     implementation(project(":core:core-common"))
     implementation(project(":core:core-database"))
     implementation(project(":core:core-datastore"))
+    implementation(libs.core.ktx)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.kotlinx.coroutines.core)

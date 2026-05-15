@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.notifiq.core.database"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
@@ -20,6 +20,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+
     room {
         schemaDirectory("$projectDir/schemas")
     }
@@ -27,6 +28,7 @@ android {
 
 dependencies {
     implementation(project(":core:core-model"))
+    implementation(libs.core.ktx)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation(libs.room.paging)

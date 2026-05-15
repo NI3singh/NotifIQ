@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.notifiq.core.datastore"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
@@ -18,10 +18,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+
 }
 
 dependencies {
     implementation(project(":core:core-model"))
+    implementation(libs.core.ktx)
     implementation(libs.datastore.preferences)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
