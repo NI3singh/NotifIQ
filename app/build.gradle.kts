@@ -72,6 +72,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.compose.animation)
+    implementation("androidx.appcompat:appcompat:1.7.0")
+
 
     // Lifecycle
     implementation(libs.androidx.lifecycle.runtime.compose)

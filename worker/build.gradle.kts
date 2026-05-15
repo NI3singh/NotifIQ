@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
@@ -18,6 +19,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 
 }
 
@@ -27,6 +31,7 @@ dependencies {
     implementation(project(":core:core-datastore"))
     implementation(project(":core:core-common"))
     implementation(project(":classification"))
+    implementation(libs.core.ktx)
     implementation(libs.workmanager.ktx)
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
