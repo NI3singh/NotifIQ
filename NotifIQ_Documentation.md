@@ -1,3 +1,109 @@
+### 📄 c:\Users\ELaunch\OneDrive\nitin-p\NotifIQ\.git\COMMIT_EDITMSG
+*Saved at: 5/15/2026, 2:24:53 PM*
+
+**[ADDED]**
+```
+60    
+61    
+```
+
+---
+
+### 📄 c:\Users\ELaunch\OneDrive\nitin-p\NotifIQ\.git\COMMIT_EDITMSG
+*Saved at: 5/15/2026, 2:24:51 PM*
+
+**[ADDED]**
+```
+3     Copy out/splash.mp4 → app/src/main/res/raw/splash.mp4
+```
+**[ADDED]**
+```
+5     Create SplashActivity.kt:
+6     
+7     @AndroidEntryPoint
+8     class SplashActivity : AppCompatActivity() {
+9     
+10        override fun onCreate(savedInstanceState: Bundle?) {
+11            super.onCreate(savedInstanceState)
+12            enableEdgeToEdge()
+13            setContentView(R.layout.activity_splash)
+14    
+15            val videoView = findViewById<VideoView>(R.id.splashVideo)
+16            val uri = Uri.parse("android.resource://$packageName/${R.raw.splash}")
+17            videoView.setVideoURI(uri)
+18            videoView.setOnPreparedListener { it.isLooping = false }
+19            videoView.setOnCompletionListener {
+20                startActivity(Intent(this, MainActivity::class.java))
+21                finish()
+22            }
+23            videoView.start()
+24        }
+25    }
+26    Create res/layout/activity_splash.xml:
+27    <?xml version="1.0" encoding="utf-8"?>
+28    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+29        android:layout_width="match_parent"
+30        android:layout_height="match_parent"
+31        android:background="#09090D">
+32    
+33        <VideoView
+34            android:id="@+id/splashVideo"
+35            android:layout_width="match_parent"
+36            android:layout_height="match_parent"
+37            android:layout_gravity="center" />
+38    
+39    </FrameLayout>
+40    In AndroidManifest.xml, make SplashActivity the launcher and remove LAUNCHER from MainActivity:
+41    <activity
+42        android:name=".SplashActivity"
+43        android:exported="true"
+44        android:theme="@style/Theme.NotifIQ"
+45        android:screenOrientation="portrait">
+46        <intent-filter>
+47            <action android:name="android.intent.action.MAIN" />
+48            <category android:name="android.intent.category.LAUNCHER" />
+49        </intent-filter>
+50    </activity>
+51    
+52    <activity
+53        android:name=".MainActivity"
+54        android:exported="false"   <!-- changed from true -->
+55        android:theme="@style/Theme.NotifIQ">
+56        <!-- no intent-filter here -->
+57    </activity>
+58    Add to app/build.gradle.kts:
+59    implementation("androidx.appcompat:appcompat:1.7.0")
+```
+
+---
+
+### 📄 c:\Users\ELaunch\OneDrive\nitin-p\NotifIQ\.git\COMMIT_EDITMSG
+*Saved at: 5/15/2026, 2:24:44 PM*
+
+**[ADDED]**
+```
+2     
+3     
+```
+
+---
+
+### 📄 c:\Users\ELaunch\OneDrive\nitin-p\NotifIQ\.git\COMMIT_EDITMSG
+*Saved at: 5/15/2026, 2:24:43 PM*
+
+**[REMOVED]**
+```
+(from line ~1)
+
+
+```
+**[ADDED]**
+```
+1     added animation video following this : 
+```
+
+---
+
 ### 📄 c:\Users\ELaunch\OneDrive\nitin-p\NotifIQ\app\build.gradle.kts
 *Saved at: 5/15/2026, 1:46:13 PM*
 
