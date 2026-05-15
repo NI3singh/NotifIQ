@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.notifiq.classification"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26

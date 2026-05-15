@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.notifiq.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.notifiq.app"
