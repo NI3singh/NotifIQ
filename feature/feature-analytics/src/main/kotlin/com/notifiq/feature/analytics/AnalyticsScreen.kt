@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.notifiq.core.designsystem.component.AppIconResolver
+import com.notifiq.core.designsystem.component.EditorialHeader
 import com.notifiq.core.designsystem.component.LoadingState
 import com.notifiq.core.model.ClassificationLabel
 
@@ -51,11 +52,7 @@ fun AnalyticsScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Analytics") }
-            )
-        }
+        containerColor = Color.Transparent
     ) { padding ->
         if (uiState.isLoading) {
             LoadingState(modifier = Modifier.fillMaxSize())
@@ -67,6 +64,10 @@ fun AnalyticsScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                item {
+                    EditorialHeader(title = "Insights", eyebrow = "Your patterns")
+                }
+
                 // Today's Overview
                 item {
                     Text(

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,6 +42,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.notifiq.core.designsystem.component.EditorialHeader
 import com.notifiq.core.designsystem.component.EmptyState
 import com.notifiq.core.designsystem.component.LoadingState
 import com.notifiq.core.designsystem.theme.color
@@ -56,36 +58,36 @@ fun SummaryScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Intelligence Summary") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
-        }
+        containerColor = Color.Transparent
     ) { paddingValues ->
-        if (uiState.isLoading) {
-            LoadingState()
-        } else if (!uiState.hasAnySummary && uiState.liveSummary == null) {
-            EmptyState(
-                icon = Icons.Default.Notifications,
-                title = "No Summaries Yet",
-                message = "Your notification summaries will appear here once you start receiving notifications."
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            EditorialHeader(
+                title = "Summary",
+                eyebrow = "Intelligence report",
+                onBack = onNavigateBack,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                if (uiState.isLoading) {
+                    LoadingState()
+                } else if (!uiState.hasAnySummary && uiState.liveSummary == null) {
+                    EmptyState(
+                        icon = Icons.Default.Notifications,
+                        title = "No Summaries Yet",
+                        message = "Your notification summaries will appear here once you start receiving notifications."
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
                 // Daily Summary
                 uiState.dailySummary?.let { summary ->
                     item {
@@ -124,6 +126,8 @@ fun SummaryScreen(
 
                 item {
                     Spacer(modifier = Modifier.height(32.dp))
+                }
+                    }
                 }
             }
         }

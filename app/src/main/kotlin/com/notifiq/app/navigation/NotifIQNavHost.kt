@@ -2,6 +2,7 @@ package com.notifiq.app.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -66,7 +67,12 @@ fun NotifIQNavHost(
             NavHost(
                 navController = navController,
                 startDestination = startDestination,
-                modifier = Modifier.padding(innerPadding)
+                // Consume the insets the outer Scaffold already applied so nested
+                // per-screen Scaffolds (Analytics/Settings/Rules/Summary) don't add
+                // the status-bar inset a second time — which caused a large empty gap.
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding)
             ) {
             composable(Routes.Onboarding.route) {
                 // FIX 6A: OnboardingScreen declares its callback as onComplete, not onNavigateToHome.
