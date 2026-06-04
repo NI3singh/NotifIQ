@@ -6,55 +6,79 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = DarkAccent,
-    onPrimary = DarkBackground,
-    primaryContainer = DarkAccentContainer,
-    onPrimaryContainer = DarkTextPrimary,
-    secondary = DarkSecondaryAccent,
-    onSecondary = DarkTextPrimary,
-    secondaryContainer = DarkSecondaryAccentContainer,
-    onSecondaryContainer = DarkTextPrimary,
-    tertiary = DarkAccent,
-    onTertiary = DarkTextPrimary,
-    tertiaryContainer = DarkSurface3,
-    onTertiaryContainer = DarkTextPrimary,
+    primary = DarkPrimary,
+    onPrimary = DarkOnPrimary,
+    primaryContainer = DarkPrimaryContainer,
+    onPrimaryContainer = DarkOnPrimaryContainer,
+    secondary = DarkSecondary,
+    onSecondary = DarkOnSecondary,
+    secondaryContainer = DarkSecondaryContainer,
+    onSecondaryContainer = DarkOnSecondaryContainer,
+    tertiary = DarkSecondary,
+    onTertiary = DarkOnSecondary,
+    tertiaryContainer = DarkSecondaryContainer,
+    onTertiaryContainer = DarkOnSecondaryContainer,
     background = DarkBackground,
-    onBackground = DarkTextPrimary,
+    onBackground = DarkOnSurface,
     surface = DarkSurface,
-    onSurface = DarkTextPrimary,
-    surfaceVariant = DarkSurface2,
-    onSurfaceVariant = DarkTextSecondary,
-    outline = DarkTextSecondary,
-    outlineVariant = DarkSurface3
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    surfaceContainerLowest = DarkSurfaceContainerLowest,
+    surfaceContainerLow = DarkSurfaceContainerLow,
+    surfaceContainer = DarkSurfaceContainer,
+    surfaceContainerHigh = DarkSurfaceContainerHigh,
+    surfaceContainerHighest = DarkSurfaceContainerHighest,
+    outline = DarkOutline,
+    outlineVariant = DarkOutlineVariant,
+    error = DarkError,
+    onError = DarkOnError,
+    errorContainer = DarkErrorContainer,
+    onErrorContainer = DarkOnErrorContainer,
+    inverseSurface = DarkInverseSurface,
+    inverseOnSurface = DarkInverseOnSurface,
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = LightAccent,
-    onPrimary = LightTextPrimary,
-    primaryContainer = LightAccentContainer,
-    onPrimaryContainer = LightTextPrimary,
-    secondary = LightSecondaryAccent,
-    onSecondary = LightSurface,
-    secondaryContainer = LightSecondaryAccentContainer,
-    onSecondaryContainer = LightTextPrimary,
-    tertiary = LightAccent,
-    onTertiary = LightSurface,
-    tertiaryContainer = LightSurface3,
-    onTertiaryContainer = LightTextPrimary,
+    primary = LightPrimary,
+    onPrimary = LightOnPrimary,
+    primaryContainer = LightPrimaryContainer,
+    onPrimaryContainer = LightOnPrimaryContainer,
+    secondary = LightSecondary,
+    onSecondary = LightOnSecondary,
+    secondaryContainer = LightSecondaryContainer,
+    onSecondaryContainer = LightOnSecondaryContainer,
+    tertiary = LightSecondary,
+    onTertiary = LightOnSecondary,
+    tertiaryContainer = LightSecondaryContainer,
+    onTertiaryContainer = LightOnSecondaryContainer,
     background = LightBackground,
-    onBackground = LightTextPrimary,
+    onBackground = LightOnSurface,
     surface = LightSurface,
-    onSurface = LightTextPrimary,
-    surfaceVariant = LightSurface2,
-    onSurfaceVariant = LightTextSecondary,
-    outline = LightTextSecondary,
-    outlineVariant = LightSurface3
+    onSurface = LightOnSurface,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = LightOnSurfaceVariant,
+    surfaceContainerLowest = LightSurfaceContainerLowest,
+    surfaceContainerLow = LightSurfaceContainerLow,
+    surfaceContainer = LightSurfaceContainer,
+    surfaceContainerHigh = LightSurfaceContainerHigh,
+    surfaceContainerHighest = LightSurfaceContainerHighest,
+    outline = LightOutline,
+    outlineVariant = LightOutlineVariant,
+    error = LightError,
+    onError = LightOnError,
+    errorContainer = LightErrorContainer,
+    onErrorContainer = LightOnErrorContainer,
+    inverseSurface = LightInverseSurface,
+    inverseOnSurface = LightInverseOnSurface,
 )
 
 @Composable
@@ -63,14 +87,15 @@ fun NotifIQTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val extendedColors = if (darkTheme) DarkExtended else LightExtended
 
     val view = LocalView.current
-
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
-            window.navigationBarColor = colorScheme.background.toArgb()
+            // Transparent bars so the background gradient runs edge-to-edge under them.
+            window.statusBarColor = Color.Transparent.toArgb()
+            window.navigationBarColor = Color.Transparent.toArgb()
             WindowCompat.getInsetsController(window, view).apply {
                 isAppearanceLightStatusBars = !darkTheme
                 isAppearanceLightNavigationBars = !darkTheme
@@ -78,10 +103,12 @@ fun NotifIQTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = NotifIQTypography,
-        shapes = NotifIQShapes,
-        content = content
-    )
+    CompositionLocalProvider(LocalExtendedColors provides extendedColors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = NotifIQTypography,
+            shapes = NotifIQShapes,
+            content = content,
+        )
+    }
 }

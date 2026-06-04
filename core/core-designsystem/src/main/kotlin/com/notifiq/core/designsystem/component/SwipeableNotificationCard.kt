@@ -16,10 +16,10 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
+import com.notifiq.core.designsystem.theme.AppTheme
 import com.notifiq.core.model.ClassificationLabel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +54,8 @@ fun SwipeableNotificationCard(
         }
     )
 
+    val ext = AppTheme.ext
+
     SwipeToDismissBox(
         state = dismissState,
         modifier = modifier,
@@ -61,16 +63,10 @@ fun SwipeableNotificationCard(
         enableDismissFromEndToStart = true,
         backgroundContent = {
             val direction = dismissState.dismissDirection
-            val backgroundBrush = when (direction) {
-                SwipeToDismissBoxValue.StartToEnd -> Brush.horizontalGradient(
-                    listOf(Color(0xFF34D399), Color(0xFF34D399))
-                ) // Green for Important
-                SwipeToDismissBoxValue.EndToStart -> Brush.horizontalGradient(
-                    listOf(Color(0xFFE91E8C), Color(0xFFC2185B))
-                ) // Pink for Archive
-                SwipeToDismissBoxValue.Settled -> Brush.horizontalGradient(
-                    listOf(Color.Transparent, Color.Transparent)
-                )
+            val background = when (direction) {
+                SwipeToDismissBoxValue.StartToEnd -> ext.labelImportant   // mark important
+                SwipeToDismissBoxValue.EndToStart -> ext.labelSpam        // archive
+                SwipeToDismissBoxValue.Settled -> Color.Transparent
             }
             val icon = when (direction) {
                 SwipeToDismissBoxValue.StartToEnd -> Icons.Default.Bolt
@@ -91,8 +87,9 @@ fun SwipeableNotificationCard(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(backgroundBrush)
-                    .padding(horizontal = 20.dp),
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(background.copy(alpha = 0.92f))
+                    .padding(horizontal = 24.dp),
                 contentAlignment = alignment
             ) {
                 Icon(

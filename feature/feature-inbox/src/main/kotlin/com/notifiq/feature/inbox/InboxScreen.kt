@@ -1,21 +1,25 @@
 package com.notifiq.feature.inbox
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -23,8 +27,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,7 +34,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -43,12 +47,12 @@ import com.notifiq.core.designsystem.component.EmptyState
 import com.notifiq.core.designsystem.component.LoadingState
 import com.notifiq.core.designsystem.component.SearchBar
 import com.notifiq.core.designsystem.component.SwipeableNotificationCard
+import com.notifiq.core.designsystem.theme.EyebrowStyle
 import com.notifiq.core.model.ClassificationLabel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InboxScreen(
-    // FIX 5C: notification IDs are String UUIDs — changed from (Long) to (String).
     onNavigateToDetail: (String) -> Unit,
     viewModel: InboxViewModel = hiltViewModel()
 ) {
@@ -58,29 +62,8 @@ fun InboxScreen(
     var lastArchivedId by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = "Inbox",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = inboxSubtitle(pagedNotifications.itemCount),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-        },
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
@@ -88,50 +71,63 @@ fun InboxScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            SearchBar(
-                query = uiState.searchQuery,
-                onQueryChange = viewModel::onSearchQueryChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                placeholder = "Search notifications..."
-            )
+            // Editorial header
+            Column(modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp)) {
+                Text(
+                    text = "Inbox",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    text = inboxSubtitle(pagedNotifications.itemCount).uppercase(),
+                    style = EyebrowStyle,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(14.dp))
+                SearchBar(
+                    query = uiState.searchQuery,
+                    onQueryChange = viewModel::onSearchQueryChange,
+                    placeholder = "Search notifications..."
+                )
+            }
+
+            Spacer(Modifier.height(14.dp))
 
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                contentPadding = PaddingValues(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(22.dp)
             ) {
                 item {
                     val totalCount = uiState.filterCounts.values.sum()
-                    InboxFilterChip(
-                        selected = uiState.selectedFilter == null,
-                        onClick = { viewModel.onFilterSelected(null) },
+                    FilterTab(
+                        selected = uiState.selectedFilter == null && !uiState.showUnreadOnly,
                         label = "All",
-                        count = totalCount
+                        count = totalCount,
+                        onClick = { viewModel.onFilterSelected(null) }
                     )
                 }
-
                 items(ClassificationLabel.entries.take(4).size) { index ->
                     val label = ClassificationLabel.entries.take(4)[index]
-                    InboxFilterChip(
+                    FilterTab(
                         selected = uiState.selectedFilter == label,
-                        onClick = { viewModel.onFilterSelected(label) },
                         label = label.displayName(),
-                        count = uiState.filterCounts[label] ?: 0
+                        count = uiState.filterCounts[label] ?: 0,
+                        onClick = { viewModel.onFilterSelected(label) }
                     )
                 }
-
                 item {
-                    InboxFilterChip(
+                    FilterTab(
                         selected = uiState.showUnreadOnly,
-                        onClick = viewModel::onToggleUnread,
-                        label = "Unread only"
+                        label = "Unread",
+                        count = 0,
+                        onClick = viewModel::onToggleUnread
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
 
             when {
                 pagedNotifications.loadState.refresh is LoadState.Loading -> {
@@ -148,20 +144,20 @@ fun InboxScreen(
                         pagedNotifications.loadState.refresh is LoadState.NotLoading -> {
                     EmptyState(
                         icon = Icons.Outlined.Email,
-                        title = "No notifications",
+                        title = "Your inbox is clear",
                         message = when {
                             uiState.searchQuery.isNotBlank() ->
                                 "No notifications match your search."
                             uiState.selectedFilter != null ->
                                 "No ${uiState.selectedFilter?.displayName()?.lowercase()} notifications."
-                            else -> "Your inbox is clear. New priority alerts will appear here."
+                            else -> "New priority alerts will appear here."
                         }
                     )
                 }
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         items(
@@ -180,15 +176,11 @@ fun InboxScreen(
                                 appName = notification.appName,
                                 title = notification.title,
                                 text = notification.text,
-                                // notification.postTime is the correct field on NotificationRecord
                                 timestamp = notification.postTime,
                                 label = notification.classificationLabel,
                                 confidence = notification.classificationScore,
                                 isSuppressed = notification.isSuppressed,
                                 isRead = notification.isRead,
-                                // FIX 5C: notification.id is a UUID String.
-                                // The old code did id.toLongOrNull() ?: 0L which always
-                                // returned 0 for UUIDs, making every detail load fail.
                                 onClick = { onNavigateToDetail(notification.id) },
                                 onSwipeLeft = {
                                     lastArchivedId = notification.id
@@ -230,44 +222,54 @@ fun InboxScreen(
 }
 
 @Composable
-private fun InboxFilterChip(
+private fun FilterTab(
     selected: Boolean,
-    onClick: () -> Unit,
     label: String,
-    count: Int = 0
+    count: Int,
+    onClick: () -> Unit
 ) {
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
-        label = {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = label,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                if (count > 0) {
-                    Text(
-                        text = count.toString(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+    val labelColor by animateColorAsState(
+        targetValue = if (selected) {
+            MaterialTheme.colorScheme.onSurface
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
         },
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            containerColor = MaterialTheme.colorScheme.surface,
-            labelColor = MaterialTheme.colorScheme.onSurfaceVariant
-        ),
-        border = FilterChipDefaults.filterChipBorder(
-            borderColor = MaterialTheme.colorScheme.outlineVariant,
-            selectedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
-            enabled = true,
-            selected = selected
-        )
+        label = "filterLabel"
     )
+    val underline by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+        label = "filterUnderline"
+    )
+
+    Column(
+        modifier = Modifier.clickable(onClick = onClick),
+        horizontalAlignment = Alignment.Start
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+                ),
+                color = labelColor
+            )
+            if (count > 0) {
+                Spacer(Modifier.width(5.dp))
+                Text(
+                    text = count.toString(),
+                    style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Spacer(Modifier.height(6.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .background(underline)
+        )
+    }
 }
 
 private fun inboxSubtitle(itemCount: Int): String {

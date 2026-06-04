@@ -4,12 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import com.notifiq.app.navigation.NotifIQNavHost
 import com.notifiq.core.datastore.UserPreferenceDataStore
 import com.notifiq.core.designsystem.theme.NotifIQTheme
@@ -31,15 +27,10 @@ class MainActivity : ComponentActivity() {
             )
 
             NotifIQTheme(darkTheme = userPreference.darkModeEnabled) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    NotifIQNavHost(
-                        hasCompletedOnboarding = userPreference.hasCompletedOnboarding,
-                        userPreferenceDataStore = userPreferenceDataStore
-                    )
-                }
+                NotifIQNavHost(
+                    hasCompletedOnboarding = userPreference.hasCompletedOnboarding,
+                    userPreferenceDataStore = userPreferenceDataStore
+                )
             }
         }
     }

@@ -1,10 +1,15 @@
 package com.notifiq.app.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -13,6 +18,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.notifiq.core.datastore.UserPreferenceDataStore
+import com.notifiq.core.designsystem.theme.AppTheme
 import com.notifiq.feature.analytics.AnalyticsScreen
 import com.notifiq.feature.detail.DetailScreen
 import com.notifiq.feature.home.HomeScreen
@@ -43,18 +49,25 @@ fun NotifIQNavHost(
     val startDestination =
         if (hasCompletedOnboarding) Routes.Home.route else Routes.Onboarding.route
 
-    Scaffold(
-        bottomBar = {
-            if (showBottomBar) {
-                BottomNavBar(navController = navController)
+    val ext = AppTheme.ext
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(ext.gradientTop, ext.gradientBottom)))
+    ) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            bottomBar = {
+                if (showBottomBar) {
+                    BottomNavBar(navController = navController)
+                }
             }
-        }
-    ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = startDestination,
-            modifier = Modifier.padding(innerPadding)
-        ) {
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = startDestination,
+                modifier = Modifier.padding(innerPadding)
+            ) {
             composable(Routes.Onboarding.route) {
                 // FIX 6A: OnboardingScreen declares its callback as onComplete, not onNavigateToHome.
                 OnboardingScreen(
@@ -125,6 +138,7 @@ fun NotifIQNavHost(
 
             composable(Routes.Summary.route) {
                 SummaryScreen(onNavigateBack = { navController.popBackStack() })
+            }
             }
         }
     }

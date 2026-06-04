@@ -2,7 +2,6 @@ package com.notifiq.core.designsystem.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -11,7 +10,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.notifiq.core.designsystem.theme.color
-import com.notifiq.core.designsystem.theme.mutedColor
 import com.notifiq.core.model.ClassificationLabel
 
 @Composable
@@ -20,15 +18,16 @@ fun CategoryChip(
     modifier: Modifier = Modifier
 ) {
     val labelText = label.name.lowercase().replace("_", " ")
+    val labelColor = label.color()
 
     Text(
         text = labelText,
         style = MaterialTheme.typography.labelSmall,
-        color = label.color(false),
+        color = labelColor,
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(label.mutedColor(false))
-            .padding(horizontal = 10.dp, vertical = 4.dp)
+            .clip(MaterialTheme.shapes.extraSmall)
+            .background(labelColor.copy(alpha = 0.12f))
+            .padding(horizontal = 8.dp, vertical = 3.dp)
             .semantics { }
     )
 }
