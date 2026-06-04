@@ -69,6 +69,21 @@ val bottomNavItems = listOf(
 )
 
 /**
+ * Select a top-level tab. The single source of truth for tab navigation — used by
+ * the bottom bar AND any other entry point that targets a tab (e.g. the Home
+ * screen's Settings icon). Using a plain `navigate()` from one of those entry
+ * points produces a back stack the tab logic can't reconcile when the start
+ * destination is later re-selected, so always route tab jumps through here.
+ */
+fun NavController.navigateToTab(route: String) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
+
+/**
  * Custom bottom bar — a warm surface with a top hairline and, for the active tab,
  * an accent-colored icon/label plus a small terracotta dot. Replaces the Material
  * NavigationBar pill (a strong "stock Android" tell).
@@ -101,15 +116,7 @@ fun BottomNavBar(navController: NavController) {
                     item = item,
                     selected = selected,
                     modifier = Modifier.weight(1f),
-                    onClick = {
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
+                    onClick = { navController.navigateToTab(item.route) }
                 )
             }
         }

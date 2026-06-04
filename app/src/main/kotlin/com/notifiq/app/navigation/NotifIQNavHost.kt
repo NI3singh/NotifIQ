@@ -90,7 +90,10 @@ fun NotifIQNavHost(
                         navController.navigate(Routes.Detail.createRoute(id))
                     },
                     onNavigateToSettings = {
-                        navController.navigate(Routes.Settings.route)
+                        // Route through the shared tab helper so reaching Settings from
+                        // here is identical to selecting the Settings tab — otherwise the
+                        // Home tab can't be re-selected afterwards.
+                        navController.navigateToTab(Routes.Settings.route)
                     },
                     userPreferenceDataStore = userPreferenceDataStore
                 )
