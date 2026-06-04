@@ -8,7 +8,7 @@ import javax.inject.Inject
 
 class AppReputationScorer @Inject constructor() : IScorer {
 
-    override fun score(context: ScoringContext): ScoringResult {
+    override suspend fun score(context: ScoringContext): ScoringResult {
         return when {
             // Protected packages - hard override to IMPORTANT
             PROTECTED_PACKAGES.contains(context.packageName) -> {

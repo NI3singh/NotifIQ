@@ -6,6 +6,7 @@ import com.notifiq.core.common.Constants
 import com.notifiq.core.model.ClassificationLabel
 import com.notifiq.core.model.ClassificationResult
 import com.notifiq.core.model.NotificationAction
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
 class ScoreAggregator @Inject constructor(
@@ -17,11 +18,11 @@ class ScoreAggregator @Inject constructor(
     private val timeContextScorer: TimeContextScorer
 ) {
 
-    fun classify(context: ScoringContext): ClassificationResult {
+    suspend fun classify(context: ScoringContext): ClassificationResult {
         var baseScore: Float = Constants.BASE_SCORE
         val reasons = mutableListOf<String>()
 
-        // Define scorer evaluation order (highest priority first)
+        // Scorer evaluation order (highest priority first).
         val scorers = listOf(
             userFeedbackScorer to "UserFeedback",
             keywordScorer to "Keyword",
@@ -31,14 +32,18 @@ class ScoreAggregator @Inject constructor(
             timeContextScorer to "TimeContext"
         )
 
-        for ((scorer, name) in scorers) {
+        for ((scorer, _) in scorers) {
             val result: ScoringResult = try {
                 scorer.score(context)
+            } catch (e: CancellationException) {
+                // Never swallow cooperative cancellation - let it propagate.
+                throw e
             } catch (e: Exception) {
+                // A single misbehaving scorer must not break classification.
                 ScoringResult(delta = 0.0, reasons = emptyList())
             }
 
-            // If hard override, return immediately
+            // If hard override, return immediately.
             if (result.isHardOverride && result.overrideLabel != null) {
                 val confidence = (baseScore + result.delta.toFloat()).coerceIn(0f, 1f)
                 return ClassificationResult(
@@ -51,16 +56,16 @@ class ScoreAggregator @Inject constructor(
                 )
             }
 
-            // Add delta and reasons
+            // Accumulate delta and reasons.
             baseScore += result.delta.toFloat()
             reasons.addAll(result.reasons)
         }
 
-        // Clamp final score
+        // Clamp final score.
         val finalScore = baseScore.coerceIn(0f, 1f)
         val label = ClassificationLabel.fromScore(finalScore.toDouble())
 
-        // Determine if ambiguous (score between 0.35-0.45 or 0.60-0.70)
+        // Flag scores that sit close to a label boundary.
         val isAmbiguous = (finalScore in 0.35f..0.45f) || (finalScore in 0.60f..0.70f)
 
         return ClassificationResult(

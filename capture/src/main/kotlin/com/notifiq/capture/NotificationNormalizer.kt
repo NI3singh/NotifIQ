@@ -4,6 +4,8 @@ import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
+import android.service.notification.NotificationListenerService.Ranking
 import android.service.notification.StatusBarNotification
 import com.notifiq.core.common.HashUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -14,7 +16,7 @@ class NotificationNormalizer @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
 
-    fun normalize(sbn: StatusBarNotification): NormalizedNotification {
+    fun normalize(sbn: StatusBarNotification, ranking: Ranking? = null): NormalizedNotification {
         val notification = sbn.notification
         val extras = notification.extras
 
@@ -32,9 +34,22 @@ class NotificationNormalizer @Inject constructor(
             sbn.packageName.substringAfterLast(".")
         }
 
-        // Get channel info
-        val channelId = notification.channelId ?: ""
-        val channelName = notification.channelId ?: ""
+        // Channel + importance MUST come from the system Ranking. The previous
+        // implementation called NotificationManager.getNotificationChannel(), but
+        // that only returns channels owned by NotifIQ itself - never the source
+        // app's - so importance was always DEFAULT (breaking ChannelImportanceScorer
+        // and the SafetyGuard importance check) and the channel name was never
+        // available. Ranking.getChannel() needs API 28+; importance needs only 26+.
+        val channel = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) ranking?.channel else null
+        val channelId = channel?.id ?: notification.channelId ?: ""
+        val channelName = channel?.name?.toString() ?: ""
+
+        val rankImportance = ranking?.importance
+        val importance = if (rankImportance != null && rankImportance >= 0) {
+            rankImportance
+        } else {
+            NotificationManager.IMPORTANCE_DEFAULT
+        }
 
         // Get category
         val category = notification.category ?: ""
@@ -46,19 +61,6 @@ class NotificationNormalizer @Inject constructor(
         val id = UUID.randomUUID().toString()
         val key = sbn.key
         val rawPayloadHash = computeHash(sbn)
-
-        // Get importance from channel or default
-        val importance = if (notification.channelId != null) {
-            try {
-                val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                val channel = nm.getNotificationChannel(notification.channelId)
-                channel?.importance ?: NotificationManager.IMPORTANCE_DEFAULT
-            } catch (e: Exception) {
-                NotificationManager.IMPORTANCE_DEFAULT
-            }
-        } else {
-            NotificationManager.IMPORTANCE_DEFAULT
-        }
 
         return NormalizedNotification(
             id = id,

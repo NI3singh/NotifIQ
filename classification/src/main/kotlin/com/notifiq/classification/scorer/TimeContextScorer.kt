@@ -8,7 +8,7 @@ import javax.inject.Inject
 
 class TimeContextScorer @Inject constructor() : IScorer {
 
-    override fun score(context: ScoringContext): ScoringResult {
+    override suspend fun score(context: ScoringContext): ScoringResult {
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = context.postTime
         val hour = calendar.get(Calendar.HOUR_OF_DAY)

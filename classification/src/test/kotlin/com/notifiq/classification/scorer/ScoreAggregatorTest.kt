@@ -10,6 +10,7 @@ import com.notifiq.core.database.dao.NotificationDao
 import com.notifiq.core.database.dao.RuleDao
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -80,7 +81,7 @@ class ScoreAggregatorTest {
     @Test
     fun `OTP notification classified as IMPORTANT`() {
         val context = createContext(text = "Your OTP is 483921")
-        val result = aggregator.classify(context)
+        val result = runBlocking { aggregator.classify(context) }
 
         assertEquals("Expected label to be IMPORTANT", ClassificationLabel.IMPORTANT, result.label)
         assertTrue("Expected confidence to be high", result.confidence >= 0.8f)
@@ -92,7 +93,7 @@ class ScoreAggregatorTest {
             packageName = "com.flipkart.android",
             text = "80% off sale! Limited time offer! Buy now!"
         )
-        val result = aggregator.classify(context)
+        val result = runBlocking { aggregator.classify(context) }
 
         assertTrue(
             "Expected label to be LOW_VALUE or SPAM, got ${result.label}",
@@ -106,7 +107,7 @@ class ScoreAggregatorTest {
             packageName = "com.example.unknown",
             text = "Hey there, are you free for coffee?"
         )
-        val result = aggregator.classify(context)
+        val result = runBlocking { aggregator.classify(context) }
 
         // Unknown app with normal text should fall in NORMAL range (0.40-0.65)
         assertEquals("Expected label to be NORMAL", ClassificationLabel.NORMAL, result.label)
@@ -118,31 +119,31 @@ class ScoreAggregatorTest {
             packageName = "com.sbi.lotusflowerbanking",
             text = "Rs. 5000 credited to your account"
         )
-        val result = aggregator.classify(context)
+        val result = runBlocking { aggregator.classify(context) }
 
         assertEquals("Expected label to be IMPORTANT", ClassificationLabel.IMPORTANT, result.label)
     }
 
     @Test
-    fun `Score clamped to 0.0 minimum`() {
+    fun `Score clamped to minimum zero`() {
         // Combine noisy app + many promo keywords + negative feedback
         val context = createContext(
             packageName = "com.flipkart.android",
             text = "SALE! 80% OFF! BUY NOW! HURRY! LIMITED TIME! FLASH DEAL! BEST PRICE!"
         )
-        val result = aggregator.classify(context)
+        val result = runBlocking { aggregator.classify(context) }
 
         assertTrue("Score should be >= 0.0", result.confidence >= 0.0f)
     }
 
     @Test
-    fun `Score clamped to 1.0 maximum`() {
+    fun `Score clamped to maximum one`() {
         // Banking + OTP + protected app should not exceed 1.0
         val context = createContext(
             packageName = "com.android.phone",
             text = "Your OTP for banking is 123456. Rs. 5000 credited to your account."
         )
-        val result = aggregator.classify(context)
+        val result = runBlocking { aggregator.classify(context) }
 
         assertTrue("Score should be <= 1.0", result.confidence <= 1.0f)
     }
@@ -154,12 +155,12 @@ class ScoreAggregatorTest {
             packageName = "com.example.unknown",
             text = "Meeting reminder: Standup in 5 minutes"
         )
-        val result = aggregator.classify(context)
+        val result = runBlocking { aggregator.classify(context) }
 
         // If confidence is around 0.4-0.45 or 0.6-0.7, isAmbiguous should be true
         val isInAmbiguousRange = (result.confidence in 0.35f..0.45f) || (result.confidence in 0.60f..0.70f)
         assertTrue(
-            "Confidence $result.confidence should result in isAmbiguous=$isInAmbiguousRange",
+            "Confidence ${result.confidence} should result in isAmbiguous=$isInAmbiguousRange",
             result.isAmbiguous == isInAmbiguousRange
         )
     }
@@ -170,7 +171,7 @@ class ScoreAggregatorTest {
             packageName = "com.flipkart.android",
             text = "SALE! SALE! SALE! 90% OFF! BUY NOW!"
         )
-        val result = aggregator.classify(context)
+        val result = runBlocking { aggregator.classify(context) }
 
         if (result.label == ClassificationLabel.SPAM) {
             assertEquals("SPAM should map to SUPPRESS", NotificationAction.SUPPRESS, result.recommendedAction)
@@ -183,7 +184,7 @@ class ScoreAggregatorTest {
             packageName = "com.sbi.lotusflowerbanking",
             text = "OTP: 123456. Rs. 5000 credited."
         )
-        val result = aggregator.classify(context)
+        val result = runBlocking { aggregator.classify(context) }
 
         if (result.label == ClassificationLabel.IMPORTANT) {
             assertEquals("IMPORTANT should map to SHOW_AND_INBOX", NotificationAction.SHOW_AND_INBOX, result.recommendedAction)
@@ -197,7 +198,7 @@ class ScoreAggregatorTest {
             packageName = "com.flipkart.android", // noisy app that would normally be penalized
             text = "Your OTP is 123456" // but OTP should win
         )
-        val result = aggregator.classify(context)
+        val result = runBlocking { aggregator.classify(context) }
 
         assertEquals("Expected label to be IMPORTANT (OTP hard override wins)", ClassificationLabel.IMPORTANT, result.label)
         assertTrue("Expected hard override result", result.label == ClassificationLabel.IMPORTANT)
