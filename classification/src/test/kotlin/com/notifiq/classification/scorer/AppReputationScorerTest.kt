@@ -2,6 +2,7 @@ package com.notifiq.classification.scorer
 
 import com.notifiq.classification.ScoringContext
 import com.notifiq.core.model.ClassificationLabel
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -35,7 +36,7 @@ class AppReputationScorerTest {
     @Test
     fun `protected phone app returns IMPORTANT override`() {
         val context = createContext("com.android.phone")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected isHardOverride to be true", result.isHardOverride)
         assertEquals("Expected override label to be IMPORTANT", ClassificationLabel.IMPORTANT, result.overrideLabel)
@@ -44,7 +45,7 @@ class AppReputationScorerTest {
     @Test
     fun `SBI banking app returns IMPORTANT override`() {
         val context = createContext("com.sbi.lotusflowerbanking")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected isHardOverride to be true", result.isHardOverride)
         assertEquals("Expected override label to be IMPORTANT", ClassificationLabel.IMPORTANT, result.overrideLabel)
@@ -53,7 +54,7 @@ class AppReputationScorerTest {
     @Test
     fun `WhatsApp returns positive delta`() {
         val context = createContext("com.whatsapp")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be positive", result.delta > 0)
         assertTrue("Expected reasons to mention messaging", result.reasons.any { it.contains("Messaging") })
@@ -62,7 +63,7 @@ class AppReputationScorerTest {
     @Test
     fun `Telegram returns positive delta`() {
         val context = createContext("org.telegram.messenger")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be positive", result.delta > 0)
         assertTrue("Expected reasons to mention messaging", result.reasons.any { it.contains("Messaging") })
@@ -71,7 +72,7 @@ class AppReputationScorerTest {
     @Test
     fun `Flipkart returns negative delta`() {
         val context = createContext("com.flipkart.android")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be negative", result.delta < 0)
         assertTrue("Expected reasons to mention promotional", result.reasons.any { it.contains("promotional") || it.contains("Known") })
@@ -80,7 +81,7 @@ class AppReputationScorerTest {
     @Test
     fun `Amazon returns negative delta`() {
         val context = createContext("in.amazon.mShop.android.shopping")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be negative", result.delta < 0)
         assertTrue("Expected reasons to mention promotional", result.reasons.any { it.contains("promotional") || it.contains("Known") })
@@ -89,7 +90,7 @@ class AppReputationScorerTest {
     @Test
     fun `Instagram returns slightly negative delta`() {
         val context = createContext("com.instagram.android")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be slightly negative", result.delta < 0)
         assertTrue("Expected delta to be > -0.1", result.delta > -0.1)
@@ -99,7 +100,7 @@ class AppReputationScorerTest {
     @Test
     fun `GitHub returns positive delta`() {
         val context = createContext("com.github.android")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be positive", result.delta > 0)
         assertTrue("Expected reasons to mention developer or work tool", result.reasons.any { it.contains("Developer") || it.contains("Work") })
@@ -108,7 +109,7 @@ class AppReputationScorerTest {
     @Test
     fun `Unknown app returns zero delta`() {
         val context = createContext("com.example.unknown")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertEquals("Expected delta to be 0 for unknown app", 0.0, result.delta, 0.001)
         assertTrue("Expected reasons to be empty", result.reasons.isEmpty())
@@ -117,7 +118,7 @@ class AppReputationScorerTest {
     @Test
     fun `Google Pay returns IMPORTANT override`() {
         val context = createContext("com.google.android.apps.nbu.paisa.user")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected isHardOverride to be true", result.isHardOverride)
         assertEquals("Expected override label to be IMPORTANT", ClassificationLabel.IMPORTANT, result.overrideLabel)

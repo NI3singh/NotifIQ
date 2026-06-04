@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.notifiq.core.designsystem.component.AppIconResolver
+import com.notifiq.core.designsystem.component.EditorialHeader
 import com.notifiq.core.designsystem.component.LoadingState
 import com.notifiq.core.designsystem.component.SearchBar
 
@@ -58,11 +59,7 @@ fun RulesScreen(
     var keywordType by remember { mutableStateOf("mute") } // "mute" or "protect"
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Rules") }
-            )
-        }
+        containerColor = Color.Transparent
     ) { paddingValues ->
         if (uiState.isLoading) {
             LoadingState()
@@ -74,6 +71,10 @@ fun RulesScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                item {
+                    EditorialHeader(title = "Rules", eyebrow = "Filters & protection")
+                }
+
                 // Search bar for filtering
                 item {
                     SearchBar(

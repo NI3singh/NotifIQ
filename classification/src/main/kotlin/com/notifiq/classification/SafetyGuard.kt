@@ -25,10 +25,13 @@ class SafetyGuard @Inject constructor() {
             return true
         }
 
-        // Check safety-critical categories
-        if (category != null) {
-            val upperCategory = category.uppercase()
-            if (Constants.SAFETY_CATEGORIES.contains(upperCategory)) {
+        // Check safety-critical categories. Android category strings are lowercase
+        // (e.g. Notification.CATEGORY_ALARM = "alarm"), and SAFETY_CATEGORIES stores
+        // them lowercase, so compare in lowercase. (The previous code uppercased the
+        // incoming value and never matched the lowercase set, leaving every category
+        // unprotected.)
+        if (!category.isNullOrBlank()) {
+            if (Constants.SAFETY_CATEGORIES.contains(category.lowercase())) {
                 return true
             }
         }

@@ -119,13 +119,24 @@ class DateTimeUtilsTest {
 
     @Test
     fun `daysAgoMillis returns correct timestamp`() {
+        // daysAgoMillis(N) returns MIDNIGHT N days ago - not "now minus N*24h" -
+        // so it must be compared against the start of today, not the current instant.
+        // (The old assertion only passed if the test ran within 60s of midnight.)
         val sevenDaysAgo = DateTimeUtils.daysAgoMillis(7)
 
-        val now = System.currentTimeMillis()
-        val diff = now - sevenDaysAgo
+        val cal = java.util.Calendar.getInstance()
+        cal.timeInMillis = sevenDaysAgo
+        assertEquals("Hour should be 0", 0, cal.get(java.util.Calendar.HOUR_OF_DAY))
+        assertEquals("Minute should be 0", 0, cal.get(java.util.Calendar.MINUTE))
+        assertEquals("Second should be 0", 0, cal.get(java.util.Calendar.SECOND))
 
-        // Should be approximately 7 days (allow some tolerance for test execution time)
+        val todayStart = DateTimeUtils.todayStartMillis()
+        val diff = todayStart - sevenDaysAgo
         val sevenDaysMs = 7 * 24 * 60 * 60 * 1000L
-        assertTrue("Should be approximately 7 days ago", kotlin.math.abs(diff - sevenDaysMs) < 60000) // within 1 minute
+        // Allow up to 1 hour of slack to tolerate a DST change within the window.
+        assertTrue(
+            "Should be ~7 days before the start of today",
+            kotlin.math.abs(diff - sevenDaysMs) <= 60 * 60 * 1000L
+        )
     }
 }

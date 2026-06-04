@@ -4,17 +4,16 @@ import com.notifiq.classification.IScorer
 import com.notifiq.classification.ScoringContext
 import com.notifiq.classification.ScoringResult
 import com.notifiq.core.model.ClassificationLabel
-import com.notifiq.core.model.RuleAction
 import com.notifiq.core.database.dao.RuleDao
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class KeywordScorer @Inject constructor(
     private val ruleDao: RuleDao
 ) : IScorer {
 
-    override fun score(context: ScoringContext): ScoringResult {
-        val combinedText = "${context.title} ${context.text} ${context.bigText}".lowercase()
+    override suspend fun score(context: ScoringContext): ScoringResult {
+        val combinedText =
+            "${context.title} ${context.text} ${context.subText} ${context.bigText}".lowercase()
         val reasons = mutableListOf<String>()
         var totalDelta = 0.0
 
@@ -29,42 +28,42 @@ class KeywordScorer @Inject constructor(
             )
         }
 
-        // Banking keywords
+        // Groups 2-5 are mutually exclusive: only the single highest-priority
+        // matching category applies (banking > important > delivery > meeting).
+        // A when/else-if chain guarantees first-match-wins, instead of the
+        // previous independent `if` blocks where the LAST match overwrote the delta.
         val matchedBanking = BANKING_KEYWORDS.firstOrNull { combinedText.contains(it) }
-        if (matchedBanking != null) {
-            totalDelta = 0.38
-            reasons.add("Banking keyword: $matchedBanking")
-        }
-
-        // Important keywords
         val matchedImportant = IMPORTANT_KEYWORDS.firstOrNull { combinedText.contains(it) }
-        if (matchedImportant != null) {
-            totalDelta = 0.35
-            reasons.add("Important keyword: $matchedImportant")
-        }
-
-        // Delivery keywords
         val matchedDelivery = DELIVERY_KEYWORDS.firstOrNull { combinedText.contains(it) }
-        if (matchedDelivery != null) {
-            totalDelta = 0.24
-            reasons.add("Delivery keyword: $matchedDelivery")
-        }
-
-        // Meeting/Calendar keywords
         val matchedMeeting = MEETING_KEYWORDS.firstOrNull { combinedText.contains(it) }
-        if (matchedMeeting != null) {
-            totalDelta = 0.20
-            reasons.add("Meeting/Calendar keyword: $matchedMeeting")
+
+        when {
+            matchedBanking != null -> {
+                totalDelta += 0.38
+                reasons.add("Banking keyword: $matchedBanking")
+            }
+            matchedImportant != null -> {
+                totalDelta += 0.35
+                reasons.add("Important keyword: $matchedImportant")
+            }
+            matchedDelivery != null -> {
+                totalDelta += 0.24
+                reasons.add("Delivery keyword: $matchedDelivery")
+            }
+            matchedMeeting != null -> {
+                totalDelta += 0.20
+                reasons.add("Meeting/Calendar keyword: $matchedMeeting")
+            }
         }
 
-        // Promotional keywords (additive)
+        // Promotional keywords (additive, capped at 3 hits)
         val promoPenalty = calculatePromoPenalty(combinedText)
         if (promoPenalty != 0.0) {
             totalDelta += promoPenalty
             reasons.add("Promotional keyword detected")
         }
 
-        // Check user-added keyword rules from database
+        // User-added keyword rules from the database (additive)
         totalDelta += checkUserRules(combinedText, reasons)
 
         if (reasons.isEmpty()) {
@@ -77,33 +76,31 @@ class KeywordScorer @Inject constructor(
         )
     }
 
-    private fun checkUserRules(text: String, reasons: MutableList<String>): Double {
-        return runBlocking {
-            var extraDelta = 0.0
+    private suspend fun checkUserRules(text: String, reasons: MutableList<String>): Double {
+        var extraDelta = 0.0
 
-            try {
-                val keywordRules = ruleDao.getByType("KEYWORD")
-                for (rule in keywordRules) {
-                    if (text.contains(rule.conditionValue.lowercase())) {
-                        when (rule.action) {
-                            "PROTECT" -> {
-                                extraDelta += 0.30
-                                reasons.add("User rule: PROTECT keyword '${rule.conditionValue}'")
-                            }
-                            "PENALIZE" -> {
-                                extraDelta -= 0.15
-                                reasons.add("User rule: PENALIZE keyword '${rule.conditionValue}'")
-                            }
-                            else -> { /* Other actions ignored */ }
+        try {
+            val keywordRules = ruleDao.getByType("KEYWORD")
+            for (rule in keywordRules) {
+                if (text.contains(rule.conditionValue.lowercase())) {
+                    when (rule.action) {
+                        "PROTECT" -> {
+                            extraDelta += 0.30
+                            reasons.add("User rule: PROTECT keyword '${rule.conditionValue}'")
                         }
+                        "PENALIZE" -> {
+                            extraDelta -= 0.15
+                            reasons.add("User rule: PENALIZE keyword '${rule.conditionValue}'")
+                        }
+                        else -> { /* Other actions ignored */ }
                     }
                 }
-            } catch (e: Exception) {
-                // If database lookup fails, continue without user rules
             }
-
-            extraDelta
+        } catch (e: Exception) {
+            // If the database lookup fails, continue without user rules
         }
+
+        return extraDelta
     }
 
     private fun calculatePromoPenalty(text: String): Double {

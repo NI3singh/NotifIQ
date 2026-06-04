@@ -1,14 +1,18 @@
 package com.notifiq.classification
 
+import com.notifiq.core.common.DateTimeUtils
 import com.notifiq.core.datastore.UserPreferenceDataStore
 import com.notifiq.core.model.ClassificationLabel
 import com.notifiq.core.model.ClassificationResult
 import com.notifiq.core.model.NotificationAction
 import com.notifiq.core.model.UserPreference
 import io.mockk.coEvery
-import kotlinx.coroutines.runBlocking
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -26,12 +30,22 @@ class PolicyEngineTest {
         policyEngine = PolicyEngine(userPreferenceDataStore, safetyGuard)
     }
 
-    private fun createClassificationResult(label: ClassificationLabel, confidence: Float = 0.5f): ClassificationResult {
+    // Mirrors ScoreAggregator.labelToAction so the fixture's recommendedAction
+    // matches what a real classification would carry for the given label.
+    private fun createClassificationResult(
+        label: ClassificationLabel,
+        confidence: Float = 0.5f
+    ): ClassificationResult {
+        val action = when (label) {
+            ClassificationLabel.LOW_VALUE -> NotificationAction.INBOX_ONLY
+            ClassificationLabel.SPAM -> NotificationAction.SUPPRESS
+            else -> NotificationAction.SHOW_AND_INBOX
+        }
         return ClassificationResult(
             label = label,
             confidence = confidence,
             reasons = listOf("test"),
-            recommendedAction = NotificationAction.SHOW_AND_INBOX,
+            recommendedAction = action,
             sourceRuleId = "test",
             isAmbiguous = false
         )
@@ -53,15 +67,13 @@ class PolicyEngineTest {
 
     @Test
     fun `Suppression disabled always returns SHOW_AND_INBOX`() = runBlocking {
-        // Setup: suppression disabled
         coEvery { userPreferenceDataStore.userPreference } returns flowOf(
             UserPreference(suppressionEnabled = false)
         )
 
-        val classification = createClassificationResult(ClassificationLabel.SPAM)
         val result = policyEngine.decide(
-            classification = classification,
-            packageName = "com.example.app",
+            classification = createClassificationResult(ClassificationLabel.SPAM, 0.15f),
+            packageName = "com.flipkart.android",
             text = "Flash sale!",
             bigText = "",
             category = null,
@@ -69,19 +81,22 @@ class PolicyEngineTest {
             postTime = System.currentTimeMillis()
         )
 
-        assertEquals("Suppression disabled should return SHOW_AND_INBOX", NotificationAction.SHOW_AND_INBOX, result)
+        assertEquals(
+            "Suppression disabled should return SHOW_AND_INBOX",
+            NotificationAction.SHOW_AND_INBOX,
+            result
+        )
     }
 
     @Test
     fun `Suppression enabled with SPAM classification returns SUPPRESS`() = runBlocking {
-        // Setup: suppression enabled, SPAM classification
+        // Suppression on, quiet hours off, so the SPAM -> SUPPRESS path is deterministic.
         coEvery { userPreferenceDataStore.userPreference } returns flowOf(
-            UserPreference(suppressionEnabled = true)
+            UserPreference(suppressionEnabled = true, quietHoursEnabled = false)
         )
 
-        val classification = createClassificationResult(ClassificationLabel.SPAM, 0.15f)
         val result = policyEngine.decide(
-            classification = classification,
+            classification = createClassificationResult(ClassificationLabel.SPAM, 0.15f),
             packageName = "com.flipkart.android",
             text = "Sale! 80% off!",
             bigText = "",
@@ -90,64 +105,92 @@ class PolicyEngineTest {
             postTime = System.currentTimeMillis()
         )
 
-        assertEquals("SPAM with suppression enabled should return SUPPRESS", NotificationAction.SUPPRESS, result)
+        assertEquals(
+            "SPAM with suppression enabled should return SUPPRESS",
+            NotificationAction.SUPPRESS,
+            result
+        )
     }
 
     @Test
     fun `Quiet hours active with NORMAL classification returns INBOX_ONLY`() = runBlocking {
-        // Setup: quiet hours enabled (23:00 - 07:00), current time mock handled by DateTimeUtils
         coEvery { userPreferenceDataStore.userPreference } returns flowOf(
-            UserPreference(quietHoursEnabled = true, quietHoursStart = 23, quietHoursEnd = 7)
+            UserPreference(
+                suppressionEnabled = true,
+                quietHoursEnabled = true,
+                quietHoursStart = 23,
+                quietHoursEnd = 7
+            )
         )
 
-        val classification = createClassificationResult(ClassificationLabel.NORMAL)
-        val result = policyEngine.decide(
-            classification = classification,
-            packageName = "com.example.app",
-            text = "Flash sale!",
-            bigText = "",
-            category = null,
-            importance = 3,
-            postTime = System.currentTimeMillis()
-        )
+        // Pin the clock-dependent check so the test is deterministic.
+        mockkObject(DateTimeUtils)
+        try {
+            every { DateTimeUtils.isQuietHours(any(), any()) } returns true
 
-        // Note: This test depends on current time. If outside quiet hours, it may not return INBOX_ONLY
-        // In a real test, we'd mock DateTimeUtils or inject a time provider
-        // For now, we just verify the logic path exists
-        assertEquals("Should return INBOX_ONLY during quiet hours", NotificationAction.INBOX_ONLY, result)
+            val result = policyEngine.decide(
+                classification = createClassificationResult(ClassificationLabel.NORMAL),
+                packageName = "com.example.app",
+                text = "Regular update",
+                bigText = "",
+                category = null,
+                importance = 3,
+                postTime = System.currentTimeMillis()
+            )
+
+            assertEquals(
+                "NORMAL during quiet hours should return INBOX_ONLY",
+                NotificationAction.INBOX_ONLY,
+                result
+            )
+        } finally {
+            unmockkObject(DateTimeUtils)
+        }
     }
 
     @Test
     fun `Quiet hours active with IMPORTANT classification returns SHOW_AND_INBOX`() = runBlocking {
-        // Setup: quiet hours enabled, IMPORTANT label should bypass
+        // IMPORTANT bypasses the quiet-hours branch regardless of the clock.
+        // importance = 3 keeps the SafetyGuard out of it so we test the label path.
         coEvery { userPreferenceDataStore.userPreference } returns flowOf(
-            UserPreference(quietHoursEnabled = true, quietHoursStart = 23, quietHoursEnd = 7)
+            UserPreference(
+                suppressionEnabled = true,
+                quietHoursEnabled = true,
+                quietHoursStart = 23,
+                quietHoursEnd = 7
+            )
         )
 
-        val classification = createClassificationResult(ClassificationLabel.IMPORTANT)
         val result = policyEngine.decide(
-            classification = classification,
+            classification = createClassificationResult(ClassificationLabel.IMPORTANT),
             packageName = "com.example.app",
-            text = "Emergency!",
+            text = "Important update",
             bigText = "",
             category = null,
-            importance = 4,
+            importance = 3,
             postTime = System.currentTimeMillis()
         )
 
-        assertEquals("IMPORTANT should return SHOW_AND_INBOX even during quiet hours", NotificationAction.SHOW_AND_INBOX, result)
+        assertEquals(
+            "IMPORTANT should bypass quiet hours",
+            NotificationAction.SHOW_AND_INBOX,
+            result
+        )
     }
 
     @Test
     fun `Focus mode active with LOW_VALUE returns INBOX_ONLY`() = runBlocking {
-        // Setup: focus mode enabled
+        // Quiet hours off so we exercise the focus-mode path specifically.
         coEvery { userPreferenceDataStore.userPreference } returns flowOf(
-            UserPreference(suppressionEnabled = true, focusModeEnabled = true)
+            UserPreference(
+                suppressionEnabled = true,
+                quietHoursEnabled = false,
+                focusModeEnabled = true
+            )
         )
 
-        val classification = createClassificationResult(ClassificationLabel.LOW_VALUE)
         val result = policyEngine.decide(
-            classification = classification,
+            classification = createClassificationResult(ClassificationLabel.LOW_VALUE),
             packageName = "com.example.app",
             text = "Flash sale!",
             bigText = "",
@@ -156,6 +199,10 @@ class PolicyEngineTest {
             postTime = System.currentTimeMillis()
         )
 
-        assertEquals("LOW_VALUE during focus mode should return INBOX_ONLY", NotificationAction.INBOX_ONLY, result)
+        assertEquals(
+            "LOW_VALUE during focus mode should return INBOX_ONLY",
+            NotificationAction.INBOX_ONLY,
+            result
+        )
     }
 }

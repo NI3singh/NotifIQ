@@ -46,9 +46,22 @@ class NotifIQListenerService : NotificationListenerService() {
         if (sbn.packageName == applicationContext.packageName) return
         if ((sbn.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY) != 0) return
 
+        // Resolve the system Ranking now: it is a snapshot tied to this callback
+        // and is the only correct source of channel importance + name for a
+        // notification owned by another app. Guarded against malformed RankingMaps
+        // on some OEM builds - worst case we fall back to default importance.
+        val ranking = rankingMap?.let { map ->
+            try {
+                val r = Ranking()
+                if (map.getRanking(sbn.key, r)) r else null
+            } catch (t: Throwable) {
+                null
+            }
+        }
+
         serviceScope.launch {
             try {
-                processNotification(sbn)
+                processNotification(sbn, ranking)
             } catch (e: Exception) {
                 // Log error but don't crash the service
             }
@@ -71,8 +84,8 @@ class NotifIQListenerService : NotificationListenerService() {
         }
     }
 
-    private suspend fun processNotification(sbn: StatusBarNotification) {
-        val normalized = notificationNormalizer.normalize(sbn)
+    private suspend fun processNotification(sbn: StatusBarNotification, ranking: Ranking?) {
+        val normalized = notificationNormalizer.normalize(sbn, ranking)
 
         if (notificationDeduplicator.isDuplicate(normalized.rawPayloadHash)) return
 

@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.notifiq.core.designsystem.component.EditorialHeader
 import com.notifiq.core.designsystem.component.LoadingState
 import kotlinx.coroutines.launch
 import java.io.File
@@ -102,11 +103,7 @@ fun SettingsScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings") }
-            )
-        },
+        containerColor = Color.Transparent,
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         if (uiState.isLoading) {
@@ -119,6 +116,10 @@ fun SettingsScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                item {
+                    EditorialHeader(title = "Settings", eyebrow = "Preferences")
+                }
+
                 // Today's Intelligence Report Card
                 item {
                     TodayIntelligenceCard(

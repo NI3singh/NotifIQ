@@ -23,13 +23,18 @@ object Constants {
         "com.yesbank"
     )
 
+    // Android notification category string VALUES (all lowercase, e.g.
+    // Notification.CATEGORY_ALARM == "alarm", CATEGORY_SYSTEM == "sys").
+    // Compared case-insensitively in SafetyGuard.
     val SAFETY_CATEGORIES = listOf(
-        "alarm",
-        "call",
-        "emergency",
-        "reminder",
-        "system",
-        "transport"
+        "alarm",          // CATEGORY_ALARM
+        "call",           // CATEGORY_CALL
+        "navigation",     // CATEGORY_NAVIGATION
+        "transport",      // CATEGORY_TRANSPORT
+        "sys",            // CATEGORY_SYSTEM (literal value is "sys", not "system")
+        "reminder",       // CATEGORY_REMINDER
+        "emergency",      // defensive: non-standard value used by some OEMs
+        "car_emergency"   // CATEGORY_CAR_EMERGENCY
     )
 
     const val BASE_SCORE = 0.5f

@@ -1,11 +1,11 @@
 package com.notifiq.feature.detail
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,14 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,7 +25,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,7 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.notifiq.core.common.DateTimeUtils
@@ -46,14 +43,12 @@ import com.notifiq.core.designsystem.component.CategoryChip
 import com.notifiq.core.designsystem.component.ConfidenceBadge
 import com.notifiq.core.designsystem.component.FeedbackActionBar
 import com.notifiq.core.designsystem.component.LoadingState
+import com.notifiq.core.designsystem.theme.AppTheme
+import com.notifiq.core.designsystem.theme.EyebrowStyle
 import com.notifiq.core.designsystem.theme.color
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
-    // FIX 5C: NotificationRecord.id is a UUID String. Changed from Long to String.
-    // DetailViewModel.savedStateHandle.get<String>() already expected a String, so only
-    // this composable parameter type needed updating.
     notificationId: String,
     onNavigateBack: () -> Unit,
     viewModel: DetailViewModel = hiltViewModel()
@@ -70,19 +65,8 @@ fun DetailScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Notification Detail") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
-        },
+        containerColor = Color.Transparent,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         if (uiState.isLoading) {
@@ -95,174 +79,151 @@ fun DetailScreen(
                         .padding(paddingValues)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    // Back row
+                    IconButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier.padding(start = 8.dp, top = 4.dp)
                     ) {
-                        Row(modifier = Modifier.fillMaxWidth()) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                        Spacer(Modifier.height(8.dp))
+
+                        // Source row
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            AppIconResolver(packageName = notification.packageName, size = 40.dp)
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = notification.appName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    text = "${notification.channelName.ifBlank { "Default" }} · " +
+                                        DateTimeUtils.toRelativeTimeString(notification.postTime),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            CategoryChip(label = notification.classificationLabel)
+                        }
+
+                        Spacer(Modifier.height(22.dp))
+
+                        // Title (serif) + body — the reading focus
+                        Text(
+                            text = notification.title,
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            text = notification.text,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.86f)
+                        )
+
+                        Spacer(Modifier.height(26.dp))
+                        Hairline()
+                        Spacer(Modifier.height(20.dp))
+
+                        // Classification reasoning
+                        SectionLabel("AI Classification")
+                        Spacer(Modifier.height(14.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CategoryChip(label = notification.classificationLabel)
+                            Spacer(Modifier.width(8.dp))
+                            ConfidenceBadge(confidence = notification.classificationScore)
+                        }
+                        Spacer(Modifier.height(14.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(6.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
                             Box(
                                 modifier = Modifier
-                                    .width(4.dp)
-                                    .height(180.dp)
-                                    .background(notification.classificationLabel.color(false))
+                                    .fillMaxWidth(notification.classificationScore)
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(notification.classificationLabel.color())
                             )
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(16.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    AppIconResolver(
-                                        packageName = notification.packageName,
-                                        size = 48.dp
+                        }
+
+                        if (notification.classificationReasons.isNotEmpty()) {
+                            Spacer(Modifier.height(18.dp))
+                            Text(
+                                text = "WHY",
+                                style = EyebrowStyle,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            notification.classificationReasons.forEach { reason ->
+                                Row(
+                                    modifier = Modifier.padding(vertical = 5.dp),
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(top = 7.dp)
+                                            .size(5.dp)
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primary)
                                     )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = notification.appName,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                        Text(
-                                            text = notification.channelName.ifBlank { "Default" },
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        // postTime is the correct field on NotificationRecord
-                                        Text(
-                                            text = DateTimeUtils.formatTimestamp(notification.postTime),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                    CategoryChip(label = notification.classificationLabel)
-                                }
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                Text(
-                                    text = notification.title,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = notification.text,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "AI Classification",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                CategoryChip(label = notification.classificationLabel)
-                                Spacer(modifier = Modifier.width(12.dp))
-                                ConfidenceBadge(confidence = notification.classificationScore)
-                            }
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(8.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth(notification.classificationScore)
-                                        .height(8.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(notification.classificationLabel.color(false))
-                                )
-                            }
-
-                            if (notification.classificationReasons.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = "Reasons",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                notification.classificationReasons.forEach { reason ->
-                                    Row(
-                                        modifier = Modifier.padding(vertical = 4.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Psychology,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(16.dp),
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = reason,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
+                                    Spacer(Modifier.width(12.dp))
+                                    Text(
+                                        text = reason,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
                             }
                         }
-                    }
 
-                    FeedbackActionBar(
-                        onMarkImportant = viewModel::onMarkImportant,
-                        onMarkUseful = viewModel::onMarkUseful,
-                        onMarkSpam = viewModel::onMarkSpam,
-                        onArchive = viewModel::onArchive,
-                        onWhitelist = viewModel::onWhitelistApp,
-                        onMute = viewModel::onMuteApp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+                        Spacer(Modifier.height(24.dp))
+                        Hairline()
+                        Spacer(Modifier.height(16.dp))
 
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        // Feedback
+                        SectionLabel("Teach NotifIQ")
+                        Spacer(Modifier.height(10.dp))
+                        FeedbackActionBar(
+                            onMarkImportant = viewModel::onMarkImportant,
+                            onMarkUseful = viewModel::onMarkUseful,
+                            onMarkSpam = viewModel::onMarkSpam,
+                            onArchive = viewModel::onArchive,
+                            onWhitelist = viewModel::onWhitelistApp,
+                            onMute = viewModel::onMuteApp,
                         )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "Source Metadata",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            MetadataRow("Package", notification.packageName)
-                            MetadataRow("Channel ID", notification.channelId)
-                            MetadataRow("Category", notification.category.ifBlank { "Unknown" })
-                            MetadataRow("Importance", notification.importance.toString())
-                            MetadataRow("Action", notification.action.name)
-                            MetadataRow("Timestamp", DateTimeUtils.formatTimestamp(notification.postTime))
-                        }
-                    }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(Modifier.height(24.dp))
+                        Hairline()
+                        Spacer(Modifier.height(20.dp))
+
+                        // Source metadata
+                        SectionLabel("Details")
+                        Spacer(Modifier.height(8.dp))
+                        MetadataRow("Package", notification.packageName)
+                        MetadataRow("Channel ID", notification.channelId.ifBlank { "—" })
+                        MetadataRow("Category", notification.category.ifBlank { "Unknown" })
+                        MetadataRow("Importance", notification.importance.toString())
+                        MetadataRow("Action", notification.action.name)
+                        MetadataRow(
+                            "Posted",
+                            DateTimeUtils.formatTimestamp(notification.postTime)
+                        )
+
+                        Spacer(Modifier.height(36.dp))
+                    }
                 }
             }
         }
@@ -270,22 +231,61 @@ fun DetailScreen(
 }
 
 @Composable
-private fun MetadataRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+private fun SectionLabel(text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
+            text = text.uppercase(),
+            style = EyebrowStyle,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface
+        Spacer(Modifier.width(12.dp))
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(AppTheme.ext.hairline)
+        )
+    }
+}
+
+@Composable
+private fun Hairline() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(AppTheme.ext.hairline)
+    )
+}
+
+@Composable
+private fun MetadataRow(label: String, value: String) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.width(16.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(AppTheme.ext.hairline)
         )
     }
 }

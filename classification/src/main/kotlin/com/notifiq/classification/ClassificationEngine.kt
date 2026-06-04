@@ -10,7 +10,7 @@ class ClassificationEngine @Inject constructor(
     private val scoreAggregator: ScoreAggregator
 ) {
 
-    fun classify(context: ScoringContext): ClassificationResult {
+    suspend fun classify(context: ScoringContext): ClassificationResult {
         return scoreAggregator.classify(context)
     }
 }

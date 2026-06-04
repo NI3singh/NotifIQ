@@ -4,6 +4,7 @@ import com.notifiq.classification.ScoringContext
 import com.notifiq.core.database.dao.RuleDao
 import com.notifiq.core.model.ClassificationLabel
 import io.mockk.mockk
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -43,7 +44,7 @@ class KeywordScorerTest {
     @Test
     fun `otp keyword in text returns IMPORTANT hard override`() {
         val context = createContext(text = "Your OTP is 483921")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected isHardOverride to be true", result.isHardOverride)
         assertEquals("Expected override label to be IMPORTANT", ClassificationLabel.IMPORTANT, result.overrideLabel)
@@ -52,7 +53,7 @@ class KeywordScorerTest {
     @Test
     fun `verification code keyword returns IMPORTANT`() {
         val context = createContext(text = "Verification code: 123456")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected isHardOverride to be true", result.isHardOverride)
         assertEquals("Expected override label to be IMPORTANT", ClassificationLabel.IMPORTANT, result.overrideLabel)
@@ -61,7 +62,7 @@ class KeywordScorerTest {
     @Test
     fun `banking keyword credited returns high positive delta`() {
         val context = createContext(text = "Rs. 5,000 credited to your account")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be positive", result.delta > 0.3)
         assertTrue("Expected reasons to contain banking keyword", result.reasons.any { it.contains("Banking") })
@@ -70,7 +71,7 @@ class KeywordScorerTest {
     @Test
     fun `banking keyword debited returns high positive delta`() {
         val context = createContext(text = "Rs. 500 debited from your account")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be positive", result.delta > 0.3)
         assertTrue("Expected reasons to contain banking keyword", result.reasons.any { it.contains("Banking") })
@@ -79,7 +80,7 @@ class KeywordScorerTest {
     @Test
     fun `important keyword emergency returns high positive delta`() {
         val context = createContext(text = "Emergency alert: earthquake warning in your area")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be positive", result.delta > 0.3)
         assertTrue("Expected reasons to contain Important keyword", result.reasons.any { it.contains("Important") })
@@ -88,7 +89,7 @@ class KeywordScorerTest {
     @Test
     fun `delivery keyword returns moderate positive delta`() {
         val context = createContext(text = "Your order has been shipped via FedEx")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be positive", result.delta > 0.2)
         assertTrue("Expected reasons to contain delivery keyword", result.reasons.any { it.contains("Delivery") })
@@ -97,7 +98,7 @@ class KeywordScorerTest {
     @Test
     fun `single promo keyword returns negative delta`() {
         val context = createContext(text = "Flash sale on electronics!")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be negative", result.delta < 0)
         assertTrue("Expected reasons to contain promotional", result.reasons.any { it.contains("Promotional") })
@@ -106,7 +107,7 @@ class KeywordScorerTest {
     @Test
     fun `multiple promo keywords cap at 3 hits`() {
         val context = createContext(text = "Flash sale! Buy now! Limited time offer! Hurry! Best price!")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         // Each promo hit is -0.12, but capped at 3 hits = -0.36
         assertTrue("Expected delta to be negative but capped", result.delta >= -0.4)
@@ -116,7 +117,7 @@ class KeywordScorerTest {
     @Test
     fun `no keywords returns zero delta`() {
         val context = createContext(text = "Hey, what's up?")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertEquals("Expected delta to be 0", 0.0, result.delta, 0.001)
         assertTrue("Expected reasons to be empty", result.reasons.isEmpty())
@@ -125,7 +126,7 @@ class KeywordScorerTest {
     @Test
     fun `empty text returns zero delta`() {
         val context = createContext(text = "")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertEquals("Expected delta to be 0", 0.0, result.delta, 0.001)
     }
@@ -133,7 +134,7 @@ class KeywordScorerTest {
     @Test
     fun `mixed OTP and promo returns IMPORTANT - OTP wins`() {
         val context = createContext(text = "Your OTP for purchase offer is 5432")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected isHardOverride to be true (OTP should win)", result.isHardOverride)
         assertEquals("Expected override label to be IMPORTANT", ClassificationLabel.IMPORTANT, result.overrideLabel)
@@ -142,7 +143,7 @@ class KeywordScorerTest {
     @Test
     fun `case insensitive matching works`() {
         val context = createContext(text = "YOUR OTP IS 1234")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected isHardOverride to be true (case insensitive)", result.isHardOverride)
     }
@@ -150,7 +151,7 @@ class KeywordScorerTest {
     @Test
     fun `banking keyword payment received`() {
         val context = createContext(text = "Payment received: Rs. 10,000")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be positive", result.delta > 0.3)
         assertTrue("Expected reasons to contain banking", result.reasons.any { it.contains("Banking") })
@@ -159,7 +160,7 @@ class KeywordScorerTest {
     @Test
     fun `meeting keyword returns positive delta`() {
         val context = createContext(text = "Meeting starts in 5 minutes")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be positive", result.delta > 0.15)
         assertTrue("Expected reasons to contain meeting", result.reasons.any { it.contains("Meeting") })
@@ -168,7 +169,7 @@ class KeywordScorerTest {
     @Test
     fun `delivery keyword arriving today`() {
         val context = createContext(text = "Your package is arriving today")
-        val result = scorer.score(context)
+        val result = runBlocking { scorer.score(context) }
 
         assertTrue("Expected delta to be positive", result.delta > 0.2)
         assertTrue("Expected reasons to contain delivery", result.reasons.any { it.contains("Delivery") })

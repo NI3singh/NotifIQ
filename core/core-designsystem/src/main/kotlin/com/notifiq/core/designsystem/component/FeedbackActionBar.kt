@@ -4,15 +4,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.DoNotDisturb
+import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.notifiq.core.designsystem.theme.AppTheme
 
 @Composable
 fun FeedbackActionBar(
@@ -34,46 +37,25 @@ fun FeedbackActionBar(
     onMute: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val ext = AppTheme.ext
     Row(
-        modifier = modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
+        FeedbackButton(Icons.Default.Bolt, "Important", ext.labelImportant, onMarkImportant)
+        FeedbackButton(Icons.Default.ThumbUp, "Useful", ext.labelUseful, onMarkUseful)
+        FeedbackButton(Icons.Default.DoNotDisturb, "Spam", ext.labelSpam, onMarkSpam)
         FeedbackButton(
-            icon = Icons.Default.Bolt,
-            label = "Important",
-            color = Color(0xFFFF8A4C),
-            onClick = onMarkImportant
+            Icons.Default.Archive, "Archive",
+            MaterialTheme.colorScheme.onSurfaceVariant, onArchive
         )
         FeedbackButton(
-            icon = Icons.Default.ThumbUp,
-            label = "Useful",
-            color = Color(0xFF34D399),
-            onClick = onMarkUseful
+            Icons.Default.Shield, "Whitelist",
+            MaterialTheme.colorScheme.primary, onWhitelist
         )
-        FeedbackButton(
-            icon = Icons.Default.DoNotDisturb,
-            label = "Spam",
-            color = Color(0xFFE91E8C),
-            onClick = onMarkSpam
-        )
-        FeedbackButton(
-            icon = Icons.Default.Archive,
-            label = "Archive",
-            color = Color(0xFF6B7280),
-            onClick = onArchive
-        )
-        FeedbackButton(
-            icon = Icons.Default.Shield,
-            label = "Whitelist",
-            color = Color(0xFFFFAA00),
-            onClick = onWhitelist
-        )
-        FeedbackButton(
-            icon = Icons.Default.DoNotDisturb,
-            label = "Mute",
-            color = Color(0xFFFACC15),
-            onClick = onMute
-        )
+        FeedbackButton(Icons.Default.NotificationsOff, "Mute", ext.warning, onMute)
     }
 }
 
@@ -84,9 +66,7 @@ private fun FeedbackButton(
     color: Color,
     onClick: () -> Unit
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         IconButton(
             onClick = onClick,
             modifier = Modifier.size(48.dp)
@@ -95,9 +75,10 @@ private fun FeedbackButton(
                 imageVector = icon,
                 contentDescription = label,
                 tint = color,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(22.dp)
             )
         }
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,

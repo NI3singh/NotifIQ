@@ -15,8 +15,7 @@ enum class ClassificationLabel {
                 score >= 0.65 -> USEFUL
                 score >= 0.40 -> NORMAL
                 score >= 0.20 -> LOW_VALUE
-                score > 0.0 -> SPAM
-                else -> UNKNOWN
+                else -> SPAM
             }
         }
     }
